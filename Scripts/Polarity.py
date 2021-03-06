@@ -16,7 +16,6 @@ def polarity(x: Binary) -> float:
         
     Return the weighted sum of bits using "beta" as weight vector.
     '''
-    
     return sum([int(x[i])*beta[i] for i in range(m)])
 
 beta = polarity_weights()

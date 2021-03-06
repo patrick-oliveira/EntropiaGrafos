@@ -2,6 +2,8 @@ import numpy as np
 from copy import deepcopy
 from Scripts.Types import Memory, Binary, CodeDistribution
 from Scripts.Parameters import m
+from Scripts.Polarity import polarity
+
 
 def initialize_memory(mu: int, m: int) -> Memory:
     '''E
@@ -27,7 +29,7 @@ def get_binary_codes(mu: int, m: int) -> Memory:
            
 def generate_code(x: int, m: int) -> Binary:
     code = complete_zeros(to_bin(x), m)
-    return code
+    return (code, polarity(code))
 
 
 def to_bin(x: int) -> Binary:
@@ -66,7 +68,7 @@ def probability_distribution(codes: Memory) -> CodeDistribution:
         
     Return a probability distribution determined over a list of binary codes.
     '''
-    return complete_probability_distribution({code:(lambda x: codes.count(x)/(len(codes)))(code) for code in set(codes)})
+    return complete_probability_distribution({code[0]:(lambda x: codes.count(x)/(len(codes)))(code) for code in set(codes)})
     
     
 def complete_probability_distribution(incomplete_distribution: CodeDistribution) -> CodeDistribution:
@@ -91,6 +93,6 @@ def random_selection(distribution: CodeDistribution) -> Binary:
         if cumulative_probability >= x:
             return code
         
-A = {generate_code(x, m):0 for x in range(2**m)}             # Alphabet (work on that later)
+A = {generate_code(x, m)[0]:0 for x in range(2**m)}             # Alphabet (work on that later)
 
 # %%

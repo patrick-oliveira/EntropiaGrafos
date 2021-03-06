@@ -48,20 +48,44 @@ class Model:
     def build_model(self):
         self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
         self.initialize_nodes()
-        self.compute_entropy()
-        self.compute_polarity() #
-        self.compute_polarity_chance() #
         self.group_individuals()
-        self.define_distortion_probabilities() #
+        
+        for node in self.G:
+            self.update_node_info(node)
+            
+        # self.compute_polarity_chance() #
+        # self.define_distortion_probabilities() #
         self.compute_edge_weights()
         self.compute_sigma_attribute() #
         
+        self.compute_graph_entropy()
+        self.compute_graph_polarity()
+        
     def update_model(self):
-        self.update_memory() #
-        self.compute_entropy()
-        self.compute_polarity() #
-        self.compute_polarity_chance() # 
-        self.define_distortion_probabilities() #
+        for node in self.G:
+            self.update_node_info(node, update_memory = True)
+            
+        # self.update_memory() #
+        # self.compute_polarity_chance() # 
+        # self.define_distortion_probabilities() #
+        
+        self.compute_graph_entropy()
+        self.compute_graph_polarity()
+        
+        
+    def update_node_info(self, node: int, update_memory: bool = False):
+        individual = self.indInfo(node)
+        tendency   = self.indTendency(node)
+        
+        if update_memory:
+            individual.update_memory()
+        
+        # compute polarity chance()
+        mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
+        setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))       
+        
+         # define distortion probabilities
+        setattr(individual, 'DistortionProbability', get_transition_probability(individual, tendency))
         
     def initialize_nodes(self):
         '''
@@ -82,21 +106,21 @@ class Model:
         
         nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
         
-    def update_memory(self):
-        for node in self.G:
-            self.indInfo(node).update_memory()
+    # def update_memory(self):
+    #     for node in self.G:
+    #         self.indInfo(node).update_memory()
         
-    def compute_polarity_chance(self):
-        for node in self.G:
-            node_object = self.indInfo(node)
-            mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
-            setattr(node_object, 'xi', self.lambd*abs(node_object.pi - mean_polarity_neighbours))
+    # def compute_polarity_chance(self):
+    #     for node in self.G:
+    #         node_object = self.indInfo(node)
+    #         mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
+    #         setattr(node_object, 'xi', self.lambd*abs(node_object.pi - mean_polarity_neighbours))
             
-    def define_distortion_probabilities(self):
-        for node in self.G:
-            individual = self.indInfo(node)
-            tendency   = self.indTendency(node)
-            setattr(individual, 'DistortionProbability', get_transition_probability(individual, tendency))
+    # def define_distortion_probabilities(self):
+    #     for node in self.G:
+    #         individual = self.indInfo(node)
+    #         tendency   = self.indTendency(node)
+    #         setattr(individual, 'DistortionProbability', get_transition_probability(individual, tendency))
         
     def compute_sigma_attribute(self):
         for node in self.G:
@@ -109,10 +133,10 @@ class Model:
     def get_acceptance_probability(self, u: int, v:int) -> float:
         return acceptance_probability(self.G, u, v, self.gamma)
         
-    def compute_entropy(self):
+    def compute_graph_entropy(self):
         self._H = sum([self.indInfo(node).H for node in self.G])/self.N
         
-    def compute_polarity(self):
+    def compute_graph_polarity(self):
         self.pi = sum([self.indInfo(node).pi for node in self.G])/self.N
         
     def indInfo(self, node: int) -> Individual:

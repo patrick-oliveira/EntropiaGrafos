@@ -69,9 +69,8 @@ class Individual:
         return self._pi
 
     def compute_polarization(self):
-        # with Pool(8) as pool:
-            # self._pi = sum(pool.map(polarity, self.L))/len(self.L)
-        self._pi = sum(map(polarity, self.L))/len(self.L)
+        # self._pi = sum(map(polarity, self.L))/self.mu
+        self._pi = sum([code[1] for code in self.L])/self.mu
 
     def select_information(self):
         return random_selection(self.P)

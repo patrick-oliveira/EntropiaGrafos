@@ -9,6 +9,4 @@ mu = 360
 m  = 5
 
 # Adjustable Parameters
-# Information distortion tendency
-kappa = 10
 

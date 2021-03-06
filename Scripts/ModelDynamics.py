@@ -3,6 +3,8 @@ from time import time
 from Scripts.Types import Graph, TransitionProbabilities, Binary, List, Dict
 from Scripts.Individual import Individual
 from Scripts.Entropy import JSD
+from Scripts.Polarity import polarity
+from Scripts.Parameters import m
 
     
 def evaluate_information(code: Binary, acceptance_probability: float):
@@ -53,12 +55,14 @@ def distort(code: Binary, transition_probability: TransitionProbabilities) -> Bi
         
     Return 'code' after bitwise distortion according to 'transition_probability'.
     '''
+    # This can be rewritten
     bin_list = list(code)
     
-    for i in range(len(code)):
+    for i in range(len(bin_list)):
         bin_list[i] = mutate(bin_list[i], transition_probability[bin_list[i]])
     
-    return to_string(bin_list)
+    new_code = to_string(bin_list)
+    return (new_code, polarity(new_code))
 
 
 def mutate(bit: int, probability: float) -> str:
