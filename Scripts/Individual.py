@@ -1,18 +1,16 @@
 __package__ = None
 
 import numpy as np
-from copy import deepcopy
 from Scripts.Types import Memory, Binary
 from Scripts.Memory import initialize_memory, probability_distribution, random_selection
 from Scripts.Entropy import empirical_entropy, max_H
-from Scripts.Polarity import polarity
-
-from multiprocessing import Pool
+import random
 
 class Individual:
     def __init__(self, mu: int, m: int, kappa: float):
         self.kappa = kappa
-        self.L = initialize_memory(mu, m)
+        self.seed = random.randint(1, 100)
+        self.L = initialize_memory(mu, m, self.seed)
         self.L_temp = []
         
     @property

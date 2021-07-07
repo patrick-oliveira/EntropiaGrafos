@@ -1,6 +1,6 @@
 # Global Parameters
 # Graph Size
-N  = 500
+N  = 100
 # preferential attachment parameter
 pa = 2
 # Size of memory list
@@ -9,6 +9,4 @@ mu = 360
 m  = 5
 
 # Adjustable Parameters
-# Information distortion tendency
-kappa = 10
 

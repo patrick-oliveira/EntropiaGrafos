@@ -2,11 +2,11 @@ import networkx as nx
 import numpy as np
 from random import sample
 
-from Scripts.Types import Graph, TransitionProbabilities, Dict
+from Scripts.Types import Dict
 from Scripts.Individual import Individual
 from Scripts.ModelDynamics import acceptance_probability, _indInfo, _indTendency, get_transition_probability, evaluate_information, distort
 from Scripts.Entropy import JSD
-from Scripts.Parameters import N, pa, mu, m
+from Scripts.Parameters import pa, mu, m
 
 
 from time import time
@@ -17,7 +17,8 @@ class Model:
                        kappa: float, lambd: float, # Proccess Parameters
                        alpha: float, omega: float, # Population Parameters
                        gamma: float,               # Information Dissemination Parameters
-                       seed: int = 42):
+                       seed: int = 42,
+                       initialize: bool = True):
         self.N  = N
         self.pa = pa
         
@@ -29,9 +30,11 @@ class Model:
         self.lambd = lambd
         self.gamma = gamma
         
-        self._seed = seed
+        self.seed = seed
         
-        self.build_model()
+        
+        self.create_graph()
+        if initialize: self.initialize_model_info()
 
     @property
     def H(self):
@@ -41,12 +44,10 @@ class Model:
     def G(self): 
         return self._G # Defined at "build_model()"
         
-    @property
-    def seed(self):
-        return self._seed
-        
-    def build_model(self):
+    def create_graph(self):
         self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        
+    def initialize_model_info(self):
         self.initialize_nodes()
         self.group_individuals()
         
@@ -133,38 +134,65 @@ class Model:
     def get_acceptance_probability(self, u: int, v:int) -> float:
         return acceptance_probability(self.G, u, v, self.gamma)
         
-    def compute_graph_entropy(self):
-        self._H = sum([self.indInfo(node).H for node in self.G])/self.N
-        
-    def compute_graph_polarity(self):
-        self.pi = sum([self.indInfo(node).pi for node in self.G])/self.N
-        
     def indInfo(self, node: int) -> Individual:
         return _indInfo(self.G, node)
     
     def indTendency(self, node: int) -> Individual:
         return _indTendency(self.G, node) 
         
+    def compute_graph_entropy(self):
+        self._H = sum([self.indInfo(node).H for node in self.G])/self.N
+        
+    def compute_graph_polarity(self):
+        self.pi = sum([self.indInfo(node).pi for node in self.G])/self.N
+        
+    def compute_info_distribution(self):
+        hist = {info:None for info in self.indInfo(0).P.keys()}
+        N = 0
+        
+        for node in self.G:
+            for info in self.indInfo(node).L:
+                hist[info] += 1
+                N += 1
+        
+        dist = {}
+        
+        for info in hist.keys():
+            dist[info] = hist[info]/N
+        
+        return hist, dist
+    
 
-def evaluateModel(T: int, statistics: Dict,
+def evaluateModel(T: int,
                   kappa: float, lambd: float,
                   alpha: float, omega: float,
                   gamma: float,
-                  seed: int = 42):
+                  seed: [int] = 42):
     '''
     Input:
     
     Evaluate a new model over T iterations.
     '''
-    model = Model(N, pa, mu, m, kappa, lambd, alpha, omega, gamma, seed)
-    update_statistics(model, statistics)
+    print("Initializing model with parameters")
+    print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - \
+          alpha = {} - omega = {} - gamma = {}".format(N, pa, mu, m, kappa, lambd, alpha, omega, gamma))
     
+    model = Model(N, pa, mu, m, kappa, lambd, alpha, omega, gamma, seed)
+    
+    statistics = {}
+    statistics['H - seed = {}'.format(model.seed)]  = []
+    statistics['pi - seed = {}'.format(model.seed)] = []
+    update_statistics(model, statistics)
+
     elapsedTime = 0
+
     for i in range(T):
-        elapsedTime += simulate(model)
+        execution_time = simulate(model)
+        elapsedTime += execution_time
+        # print("Iteration {} ended - Execution Time = {}".format(i, execution_time))
         update_statistics(model, statistics)
         
-    return elapsedTime
+    return elapsedTime, statistics
 
 def simulate(M):
     '''
@@ -173,21 +201,24 @@ def simulate(M):
         
     Execute one iteration of the dissemination model, updating the model's parameters at the end. Return the execution time (minutes).
     '''
+    
+    
     start = time()
     for u, v in M.G.edges():
-        u_ind = _indInfo(M.G, u)
-        v_ind = _indInfo(M.G, v)
+        u_ind = M.indInfo(u)
+        v_ind = M.indInfo(v)
         u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
-        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))     
     end = time()
+    
     M.update_model()
     return (end - start)/60
-    
+
 def update_statistics(M, statistics: Dict):
     '''
     Input:
         M: A population model.
         statistics: A dictionary to accumulate statistics computed from "M"
     '''
-    statistics['H'].append(M.H)
-    statistics['pi'].append(M.pi)
+    statistics['H - seed = {}'.format(M.seed)].append(M.H)
+    statistics['pi - seed = {}'.format(M.seed)].append(M.pi)

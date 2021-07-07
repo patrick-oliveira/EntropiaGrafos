@@ -5,7 +5,7 @@ from Scripts.Parameters import m
 from Scripts.Polarity import polarity
 
 
-def initialize_memory(mu: int, m: int) -> Memory:
+def initialize_memory(mu: int, m: int, seed: int) -> Memory:
     '''E
     Input:
         mu: Number of codes.
@@ -13,10 +13,10 @@ def initialize_memory(mu: int, m: int) -> Memory:
         
     Return a list of size 'mu' of random binary codes of length 'm' taken from a Binomial distribution of parameters (2**m, 0.5). This list corresponds to 
     '''
-    return get_binary_codes(mu = mu, m = m) 
+    return get_binary_codes(mu = mu, m = m, seed = seed) 
 
 
-def get_binary_codes(mu: int, m: int) -> Memory:
+def get_binary_codes(mu: int, m: int, seed:int) -> Memory:
     '''
     Input:
         mu: Number of codes.
@@ -24,6 +24,7 @@ def get_binary_codes(mu: int, m: int) -> Memory:
         
     Return a list of binary codes (without prefix) of integers drawn from a Binomial Distribution with parameters (2**m, 0.5)
     '''
+    np.random.seed(seed)
     return [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size = mu)] if mu != None else \
            [generate_code(np.random.binomial(2**m, 0.5), m)]
            
@@ -94,5 +95,3 @@ def random_selection(distribution: CodeDistribution) -> Binary:
             return code
         
 A = {generate_code(x, m)[0]:0 for x in range(2**m)}             # Alphabet (work on that later)
-
-# %%

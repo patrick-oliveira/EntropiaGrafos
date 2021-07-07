@@ -1,10 +1,8 @@
 import numpy as np
-from time import time
-from Scripts.Types import Graph, TransitionProbabilities, Binary, List, Dict
+from Scripts.Types import Graph, TransitionProbabilities, Binary, List
 from Scripts.Individual import Individual
 from Scripts.Entropy import JSD
 from Scripts.Polarity import polarity
-from Scripts.Parameters import m
 
     
 def evaluate_information(code: Binary, acceptance_probability: float):

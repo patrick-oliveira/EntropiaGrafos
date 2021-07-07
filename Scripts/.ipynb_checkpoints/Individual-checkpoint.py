@@ -1,20 +1,17 @@
 __package__ = None
 
 import numpy as np
-from copy import deepcopy
 from Scripts.Types import Memory, Binary
 from Scripts.Memory import initialize_memory, probability_distribution, random_selection
 from Scripts.Entropy import empirical_entropy, max_H
-from Scripts.Polarity import polarity
-
-from multiprocessing import Pool
+import random
 
 class Individual:
     def __init__(self, mu: int, m: int, kappa: float):
         self.kappa = kappa
-        self.L = initialize_memory(mu, m)
+        self.seed = random.randint(1, 100)
+        self.L = initialize_memory(mu, m, self.seed)
         self.L_temp = []
-        self.P = probability_distribution(self.L)
         
     @property
     def L(self):
@@ -70,9 +67,8 @@ class Individual:
         return self._pi
 
     def compute_polarization(self):
-        with Pool() as pool:
-            self._pi = sum(pool.starmap(polarity, self.L))/len(self.L)
-        # self._pi = sum(map(polarity, self.L))/len(self.L)
+        # self._pi = sum(map(polarity, self.L))/self.mu
+        self._pi = sum([code[1] for code in self.L])/self.mu
 
     def select_information(self):
         return random_selection(self.P)
