@@ -12,7 +12,7 @@ class Individual:
         self.kappa = kappa
         self.seed = random.randint(1, 100)                    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
         self.L = initialize_memory()
-        self.L_temp = np.asarray([])
+        self.L_temp = []
         
     @property
     def L(self):
@@ -75,9 +75,10 @@ class Individual:
         return random_selection(self.P)
     
     def update_memory(self):
-        self.L = self.append(self.L, self.L_temp, axis = 0)[len(self.L_temp):]
-        self.L_temp = np.asarray([])
+        if len(self.L_temp) > 0:
+            self.L[0] = np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):]
+            self.L_temp = []
         
     def receive_information(self, new_code: Binary):
-        if new_code != None:
-            self.L_temp = np.append(self.L_temp, [new_code], axis = 0)
+        if not (new_code is None):
+            self.L_temp.append(new_code)

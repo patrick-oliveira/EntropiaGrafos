@@ -1,12 +1,16 @@
 # Global Parameters
 # Graph Size
-N  = 100
+N  = 500
 # preferential attachment parameter
 pa = 2
 # Size of memory list
-mu = 360
+memory_size = 50
 # Length of binary codes
-m  = 5
+code_length  = 8
 
-# Adjustable Parameters
+# Maximum Entropy
+max_H = code_length # por que é isso mesmo?
+
+# General Parameters
+seed = 42
 

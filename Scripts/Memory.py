@@ -15,7 +15,7 @@ def initialize_memory() -> Memory:
     """   
     code_array = get_binary_codes(memory_size, code_length)
     polarity_array = polarity(code_array)
-    return (code_array, polarity_array)
+    return [code_array, polarity_array]
 
 def get_binary_codes(mu: int, m: int) -> Memory: # Troque esse tipo de saída.
     """

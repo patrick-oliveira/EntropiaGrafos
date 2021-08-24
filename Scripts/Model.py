@@ -102,7 +102,7 @@ class Model:
         self.compute_edge_weights()
         self.compute_sigma_attribute()
         self.compute_graph_entropy()
-        self.compute_graph_polarity()
+        # self.compute_graph_polarity()
         
     def update_model(self):
         """
@@ -114,7 +114,7 @@ class Model:
         self.compute_edge_weights()
         self.compute_sigma_attribute()
         self.compute_graph_entropy()
-        self.compute_graph_polarity()
+        # self.compute_graph_polarity()
         
         
     def update_node_info(self, node: int, update_memory: bool = False):
@@ -133,8 +133,8 @@ class Model:
             individual.update_memory()
             
         # compute polarity probability
-        mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
-        setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))    
+        # mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
+        # setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))    
         # Updates the information distortion probabilities based on entropic effects and polarzation bias
         setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency))   
         
@@ -249,8 +249,7 @@ class Model:
 def evaluateModel(T: int,
                   kappa: float, lambd: float,
                   alpha: float, omega: float,
-                  gamma: float,
-                  seed: int = 42) -> Dict:
+                  gamma: float) -> Dict:
     """
     Evaluate a new model over T iterations.
 
@@ -267,14 +266,13 @@ def evaluateModel(T: int,
         Dict: A dictionary of statistics extracted from the model after each iteration.
     """    
     print("Initializing model with parameters")
-    print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - \
-          alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+    print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
     model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
     
     statistics = {}
     statistics['H - seed = {}'.format(model.seed)]  = []
-    statistics['pi - seed = {}'.format(model.seed)] = []
+    # statistics['pi - seed = {}'.format(model.seed)] = []
     update_statistics(model, statistics)
 
     elapsedTime = 0
@@ -283,10 +281,10 @@ def evaluateModel(T: int,
         print(f"Starting iteration {i}")
         execution_time = simulate(model)
         elapsedTime += execution_time
-        print(f"Iteration {i} ended - Execution Time = {execution_time}")
+        print(f"Iteration {i} ended - Execution Time = {np.round(execution_time, 5)}")
         update_statistics(model, statistics)
         
-    print(f"Simulation ended. Execution time = {elapsedTime}")        
+    print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} min")        
     return elapsedTime, statistics
 
 def simulate(M: Model) -> float:
@@ -318,4 +316,4 @@ def update_statistics(M: Model, statistics: Dict):
         statistics (Dict): A dictionary with the statistics arrays to be updated.
     """ 
     statistics['H - seed = {}'.format(M.seed)].append(M.H)
-    statistics['pi - seed = {}'.format(M.seed)].append(M.pi)
+    # statistics['pi - seed = {}'.format(M.seed)].append(M.pi)

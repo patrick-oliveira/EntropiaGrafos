@@ -1,6 +1,6 @@
 # Global Parameters
 # Graph Size
-N  = 100
+N  = 500
 # preferential attachment parameter
 pa = 2
 # Size of memory list
