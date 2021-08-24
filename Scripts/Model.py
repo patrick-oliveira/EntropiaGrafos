@@ -6,7 +6,7 @@ from Scripts.Types import Dict
 from Scripts.Individual import Individual
 from Scripts.ModelDynamics import acceptance_probability, _indInfo, _indTendency, get_transition_probability, evaluate_information, distort
 from Scripts.Entropy import JSD
-from Scripts.Parameters import pa, mu, m
+from Scripts.Parameters import pa, mu, m, N
 
 
 from time import time
@@ -189,7 +189,7 @@ def evaluateModel(T: int,
     for i in range(T):
         execution_time = simulate(model)
         elapsedTime += execution_time
-        # print("Iteration {} ended - Execution Time = {}".format(i, execution_time))
+        print("Iteration {} ended - Execution Time = {}".format(i, execution_time))
         update_statistics(model, statistics)
         
     return elapsedTime, statistics
