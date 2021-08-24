@@ -3,15 +3,16 @@ __package__ = None
 import numpy as np
 from Scripts.Types import Memory, Binary
 from Scripts.Memory import initialize_memory, probability_distribution, random_selection
-from Scripts.Entropy import empirical_entropy, max_H
+from Scripts.Entropy import memory_entropy
+from Scripts.Parameters import max_H
 import random
 
 class Individual:
-    def __init__(self, mu: int, m: int, kappa: float):
+    def __init__(self, kappa: float):
         self.kappa = kappa
-        self.seed = random.randint(1, 100)
-        self.L = initialize_memory(mu, m, self.seed)
-        self.L_temp = []
+        self.seed = random.randint(1, 100)                    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
+        self.L = initialize_memory()
+        self.L_temp = np.asarray([])
         
     @property
     def L(self):
@@ -19,27 +20,25 @@ class Individual:
     
     @L.setter
     def L(self, memory: Memory):
-        '''
-        Everytime the memory is updated, the distribution must be updated, so as the entropy (and the values that depends on the entropy) 
-        and the polarization.
-        '''
+        """
+        Everytime the memory is updated, its probability distribution is automatically updated, so as the entropy, the values that depends on the entropy, and the polarization.
+
+        Args:
+            memory (Memory): An array of binary codes.
+        """
         self._L = memory
         self.P  = probability_distribution(self.L)
         self.compute_entropy()
-        self.compute_polarization()
+        # self.compute_polarization()
     
     @property
-    def mu(self):
-        '''
-        mu : memory size
-        '''
-        return len(self.L)
-    
-    @property
-    def X(self):
-        '''
-        Return a randomly selected binary code, based on the frequency of codes in the memory.
-        '''
+    def X(self) -> Binary:
+        """
+        Return a randomly selected binary code based on the memory's probability distribution.
+
+        Returns:
+            Binary: A binary code (numpy array of bits)
+        """        
         return self.select_information()
     
     # Setters are used to make it explicit that some parameters exists and are computed elsewhere, e.g. "compute_entropy".
@@ -49,10 +48,10 @@ class Individual:
         return self._H
 
     def compute_entropy(self):
-        '''
-        Everytime the entropy is updated, the conservation factor must be updated also.
-        '''
-        self._H = empirical_entropy(self.L, self.P)
+        """
+        Everytime the entropy is updated, the distortion probability (delta) is automatically updated.
+        """
+        self._H = memory_entropy(self.L, self.P)
         self.compute_conservation_factor()
     
     @property
@@ -60,26 +59,25 @@ class Individual:
         return self._delta
     
     def compute_conservation_factor(self):
+        """
+        Updates the probability of distortion due to imperfect memory..
+        """        
         self._delta = 1/(np.exp(self.kappa*(max_H - self.H)/max_H) + 1)
     
-    @property
-    def pi(self):
-        return self._pi
+    # @property
+    # def pi(self):
+    #     return self._pi
 
-    def compute_polarization(self):
-        # self._pi = sum(map(polarity, self.L))/self.mu
-        self._pi = sum([code[1] for code in self.L])/self.mu
+    # def compute_polarization(self):
+    #     self._pi = sum([code[1] for code in self.L])/self.mu
 
     def select_information(self):
         return random_selection(self.P)
     
     def update_memory(self):
-        for new_code in self.L_temp:
-            self.L.append(new_code)
-        
-        self.L = self.L[len(self.L_temp):] 
-        self.L_temp = []
+        self.L = self.append(self.L, self.L_temp, axis = 0)[len(self.L_temp):]
+        self.L_temp = np.asarray([])
         
     def receive_information(self, new_code: Binary):
         if new_code != None:
-            self.L_temp = self.L_temp + [new_code]
+            self.L_temp = np.append(self.L_temp, [new_code], axis = 0)

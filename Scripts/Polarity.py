@@ -1,21 +1,28 @@
 import numpy as np
 from Scripts.Types import Weights, Binary
-from Scripts.Parameters import m
+from Scripts.Parameters import code_length, seed
 
 def polarity_weights() -> Weights:
-    '''
-    Return a normalized list of 'm' random values. These values are used as weights to calculate the polarity of a binary code. 
-    '''
-    v = abs(np.random.randn(m))
+    """
+    Return a normalized list of 'm' random values.
+    These values are used as weights to calculate the polarity of a binary code.
+
+    Returns:
+        Weights: A numpy array of 'm' normalized random values.
+    """    
+    v = abs(np.random.randn(code_length))
     return v/sum(v)
 
 def polarity(x: Binary) -> float:
-    '''
-    Input: 
-        X: A binary code.
-        
-    Return the weighted sum of bits using "beta" as weight vector.
-    '''
-    return sum([int(x[i])*beta[i] for i in range(m)])
+    """Return the weighted average of bits using "beta" as weight vector.
 
+    Args:
+        x (Binary): A binary code (numpy array of bits) or a list of binary codes
+
+    Returns:
+        float: The information's polarity (a weighted average)
+    """ 
+    return np.dot(beta, x.T)
+
+np.random.seed(seed)
 beta = polarity_weights()
