@@ -1,8 +1,7 @@
 import numpy as np
-from Scripts.Types import Graph, TransitionProbabilities, Binary, List
+from Scripts.Types import Graph, TransitionProbabilities, Binary
 from Scripts.Individual import Individual
 from Scripts.Entropy import JSD
-from Scripts.Polarity import polarity
 from Scripts.Parameters import code_length
 
     
@@ -55,9 +54,9 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
     Returns:
         TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
     """    
-    return {0: ind.delta + ind.xi, 1:ind.delta} if tendency == 'Up' else \
-          ({0: ind.delta, 1:ind.delta + ind.xi} if tendency == 'Down' else \
-           {0: ind.delta, 1:ind.delta})
+    return (lambda x: (1 - x)*ind.delta + x*ind.delta) if tendency == 'Up' else \
+           (lambda x: (1 - x)*ind.delta + x*ind.delta) if tendency == 'Up' else \
+           (lambda x: (1 - x)*ind.delta + x*ind.delta)
           
 def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
     """Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
@@ -70,7 +69,7 @@ def distort(code: Binary, transition_probability: TransitionProbabilities) -> Bi
         Binary: A possibily bitwise distorted code.
     """    
     # get the mutation probability for each bit of "code"
-    transition_probabilities = np.vectorize(lambda x: transition_probability[x])(code)
+    transition_probabilities = transition_probability(code)
     # get a vector of random numbers with same size as "code"
     random_numbers = np.random.uniform(size = code_length)
     # get a vector identifying which bits will be mutated
@@ -110,10 +109,8 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     Returns:
         float: The acceptance probability for u of informations given by v.
     """
-    u_ind = getInfo(G, u)
-    v_ind = getInfo(G, v)
     
-    max_sigma = max(set([u_ind.sigma**gamma]).union([getInfo(G, w).sigma**gamma for w in G.neighbors(u)]))
+    max_sigma = max(set([len(list(G.neighbors(u)))**gamma]).union([len(list(G.neighbors(w)))**gamma for w in list(G.neighbors(u))]))
     
-    sigma_ratio = v_ind.sigma**gamma/max_sigma
-    return 2/( 1/proximity(u_ind, v_ind) + 1/sigma_ratio )
+    sigma_ratio =(len(list(G.neighbors(v)))**gamma)/max_sigma
+    return 2/( 1/G[u][v]['Distance'] + 1/sigma_ratio )

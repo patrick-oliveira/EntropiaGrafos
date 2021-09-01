@@ -51,7 +51,7 @@ class Individual:
         """
         Everytime the entropy is updated, the distortion probability (delta) is automatically updated.
         """
-        self._H = memory_entropy(self.L, self.P)
+        self._H = memory_entropy(self.P)
         self.compute_conservation_factor()
     
     @property
@@ -76,7 +76,7 @@ class Individual:
     
     def update_memory(self):
         if len(self.L_temp) > 0:
-            self.L[0] = np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):]
+            self.L = [np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):], self.L[1]]
             self.L_temp = []
         
     def receive_information(self, new_code: Binary):

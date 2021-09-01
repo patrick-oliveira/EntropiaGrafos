@@ -119,10 +119,9 @@ def heat_plot(X: np.array, size: Tuple[int],
               x_tick_labels: List[str] = None,
               y_tick_labels: List[str] = None,
               y_tick_rotation: str = 'horizontal',
-              cmap: str = None) -> Tuple[Figure, Axis]:
-    fig, ax = plt.subplots(1, 1)
-    
-    fig.set_size_inches(size)
+              cmap: str = None
+              fig,
+              ax) -> Tuple[Figure, Axis]:
     
     sns.heatmap(X, linewidth = 0, ax = ax, cmap = cmap)
     

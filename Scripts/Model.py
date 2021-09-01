@@ -1,13 +1,14 @@
 import networkx as nx
 import numpy as np
+from time import time
 from random import sample
 
 from Scripts.Types import Dict
 from Scripts.Individual import Individual
-from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, distort, getInfo, getTendency
+from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
+                                  distort, getInfo, getTendency
 from Scripts.Entropy import JSD
 from Scripts.Parameters import pa, memory_size, code_length, seed, N
-from time import time
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -15,6 +16,7 @@ class Model:
                        kappa: float, lambd: float, # Proccess Parameters
                        alpha: float, omega: float, # Population Parameters
                        gamma: float,               # Information Dissemination Parameters
+                       seed: int,
                        initialize: bool = True):
         """
         
@@ -70,6 +72,10 @@ class Model:
         return self._H
     
     @property
+    def J(self) -> float:
+        return self._J
+    
+    @property
     def pi(self) -> float:
         """
         Mean polarity.
@@ -81,7 +87,7 @@ class Model:
     
     @property
     def G(self): 
-        return self._G # Defined at "build_model()"
+        return self._G
         
     def create_graph(self):
         """
@@ -114,6 +120,7 @@ class Model:
         self.compute_edge_weights()
         self.compute_sigma_attribute()
         self.compute_graph_entropy()
+        self.compute_mean_edge_weight()
         # self.compute_graph_polarity()
         
         
@@ -217,33 +224,29 @@ class Model:
         """        
         return getTendency(self.G, node) 
         
-    def compute_graph_entropy(self):
+    def compute_graph_entropy(self) -> None:
         """
         Computes the mean entropy of the network's individuals.
         """        
         self._H = sum([self.indInfo(node).H for node in self.G])/self.N
         
-    def compute_graph_polarity(self):
+    def compute_mean_edge_weight(self) -> None:
+        '''
+        Computes the mean distance of the networks edges.
+
+        Returns
+        -------
+        None.
+        '''
+        edge_weights = nx.get_edge_attributes(self.G, 'Distance')
+        self._J = sum([edge_weights[edge] for edge in self.G.edges])/self.N
+        
+    def compute_graph_polarity(self) -> None:
         """
         Computes the mean polarity of the network's individuals.
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
         
-    def compute_info_distribution(self):
-        hist = {info:None for info in self.indInfo(0).P.keys()}
-        N = 0
-        
-        for node in self.G:
-            for info in self.indInfo(node).L:
-                hist[info] += 1
-                N += 1
-        
-        dist = {}
-        
-        for info in hist.keys():
-            dist[info] = hist[info]/N
-        
-        return hist, dist
     
 
 def evaluateModel(T: int,
@@ -269,27 +272,20 @@ def evaluateModel(T: int,
     print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
     model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
-    
-    statistics = {}
-    statistics['H - seed = {}'.format(model.seed)]  = []
-    # statistics['pi - seed = {}'.format(model.seed)] = []
-    update_statistics(model, statistics)
 
     elapsedTime = 0
-
     for i in range(T):
-        print(f"Starting iteration {i}")
         execution_time = simulate(model)
         elapsedTime += execution_time
-        print(f"Iteration {i} ended - Execution Time = {np.round(execution_time, 5)}")
-        update_statistics(model, statistics)
+    
         
     print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} min")        
-    return elapsedTime, statistics
+    return elapsedTime
 
 def simulate(M: Model) -> float:
     """
-    Execute one iteration of the information propagation model, updating the model's parameters at the end. Return the execution time (minutes).
+    Execute one iteration of the information propagation model, updating the model's parameters at the end. 
+    Return the execution time (minutes).
 
     Args:
         M (Model): A model instance.  
@@ -307,13 +303,3 @@ def simulate(M: Model) -> float:
     
     M.update_model()
     return (end - start)/60
-
-def update_statistics(M: Model, statistics: Dict):
-    """Updates statistics extracted from the model.
-
-    Args:
-        M (Model): A model instance.
-        statistics (Dict): A dictionary with the statistics arrays to be updated.
-    """ 
-    statistics['H - seed = {}'.format(M.seed)].append(M.H)
-    # statistics['pi - seed = {}'.format(M.seed)].append(M.pi)
