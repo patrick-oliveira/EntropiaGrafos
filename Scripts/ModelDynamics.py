@@ -32,7 +32,8 @@ def getInfo(G: Graph, node: int) -> Individual:
     return G.nodes[node]['Object']
 
 def getTendency(G: Graph, node: int) -> str:
-    """Return the polarization tendency of a given node.
+    """
+    Return the polarization tendency of a given node.
 
     Args:
         G (Graph): The graph model.
@@ -59,7 +60,8 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
            (lambda x: (1 - x)*ind.delta + x*ind.delta)
           
 def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
-    """Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
+    """
+    Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
 
     Args:
         code (Binary): A binary code.
@@ -75,7 +77,7 @@ def distort(code: Binary, transition_probability: TransitionProbabilities) -> Bi
     # get a vector identifying which bits will be mutated
     mutate = (random_numbers <= transition_probabilities).astype(int)
     # get the arguments for all bits which will be mutated
-    mutate = np.argwhere(mutate).reshape(-1)
+    # mutate = np.argwhere(mutate).reshape(-1)
     # mutate all selected bits (inverting its values)
     code[mutate] = np.logical_not(code[mutate]).astype(int)
     
@@ -110,7 +112,7 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
         float: The acceptance probability for u of informations given by v.
     """
     
-    max_sigma = max(set([len(list(G.neighbors(u)))**gamma]).union([len(list(G.neighbors(w)))**gamma for w in list(G.neighbors(u))]))
+    max_sigma = max(set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))]))
     
-    sigma_ratio =(len(list(G.neighbors(v)))**gamma)/max_sigma
+    sigma_ratio =(G.degree[v]**gamma)/max_sigma
     return 2/( 1/G[u][v]['Distance'] + 1/sigma_ratio )

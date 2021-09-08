@@ -103,6 +103,7 @@ def probability_distribution(memory: Memory) -> CodeDistribution:
     """    
     probability_distribution = np.zeros(2**code_length)
     integers = np.matmul(memory[0], powers_of_two)
+    
     for code in integers:
         probability_distribution[code] += 1
         

@@ -1,10 +1,10 @@
 # Global Parameters
 # Graph Size
-N  = 500
+N  = 3000
 # preferential attachment parameter
 pa = 2
 # Size of memory list
-memory_size = 50
+memory_size = 300
 # Length of binary codes
 code_length  = 5
 

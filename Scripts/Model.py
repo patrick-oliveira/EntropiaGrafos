@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from time import time
+import time
 from random import sample
 
 from Scripts.Types import Dict
@@ -9,6 +9,8 @@ from Scripts.ModelDynamics import acceptance_probability, get_transition_probabi
                                   distort, getInfo, getTendency
 from Scripts.Entropy import JSD
 from Scripts.Parameters import pa, memory_size, code_length, seed, N
+
+from multiprocessing import Pool
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -114,6 +116,7 @@ class Model:
         """
         Updates the network information (individual's information and all measures based on entropy) after each iteration.
         """        
+        
         for node in self.G:
             self.update_node_info(node, update_memory = True)
         
@@ -271,18 +274,18 @@ def evaluateModel(T: int,
     print("Initializing model with parameters")
     print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
+    start = time.time()
     model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
 
-    elapsedTime = 0
     for i in range(T):
-        execution_time = simulate(model)
-        elapsedTime += execution_time
+        simulate(model)
     
-        
-    print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} min")        
+    end = time.time()
+    elapsedTime = end - start
+    print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} seconds")        
     return elapsedTime
 
-def simulate(M: Model) -> float:
+def simulate(M: Model):
     """
     Execute one iteration of the information propagation model, updating the model's parameters at the end. 
     Return the execution time (minutes).
@@ -291,15 +294,12 @@ def simulate(M: Model) -> float:
         M (Model): A model instance.  
 
     Returns:
-        float: Execution time.
-    """    
-    start = time()
+        None.
+    """
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
         u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
-        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))     
-    end = time()
+        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
     
     M.update_model()
-    return (end - start)/60
