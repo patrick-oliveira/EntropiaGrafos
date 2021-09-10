@@ -3,6 +3,7 @@ import numpy as np
 from Scripts.Model import Model
 from Scripts.Memory import powers_of_two
 from Scripts.Parameters import N, memory_size, code_length
+from Scripts.Types import Dict
 
 class Statistic:
     '''
@@ -27,6 +28,9 @@ class Statistic:
         None.
 
         '''
+        raise NotImplementedError
+        
+    def get_rep_mean(self, statistics: np.array) -> np.array:
         raise NotImplementedError
         
 class StatisticHandler:
@@ -100,6 +104,18 @@ class StatisticHandler:
 
         '''
         pickle.dump(self.stats_values, open(file_name+".pickle", "rb"))
+        
+    def get_statistics(self) -> Dict:
+        return self.stats_values
+    
+    def reset_statistics(self, hard_reset: bool = False) -> None:
+        if hard_reset:
+            self.stats_definitions = {}
+            self.stats_values      = {}
+        else:
+            for statistic in self.stats_definitions.keys():
+                self.stats_values[statistic] = []
+        
 
 class MeanEntropy(Statistic):
     def __call__(self, model: Model) -> float:

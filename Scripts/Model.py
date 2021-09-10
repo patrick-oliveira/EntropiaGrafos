@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import time
 from random import sample
+from copy import deepcopy
 
 from Scripts.Types import Dict
 from Scripts.Individual import Individual
@@ -9,8 +10,6 @@ from Scripts.ModelDynamics import acceptance_probability, get_transition_probabi
                                   distort, getInfo, getTendency
 from Scripts.Entropy import JSD
 from Scripts.Parameters import pa, memory_size, code_length, seed, N
-
-from multiprocessing import Pool
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -249,13 +248,13 @@ class Model:
         Computes the mean polarity of the network's individuals.
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
-        
     
 
 def evaluateModel(T: int,
                   kappa: float, lambd: float,
                   alpha: float, omega: float,
-                  gamma: float) -> Dict:
+                  gamma: float,
+                  num_repetitions: int = 1) -> Dict:
     """
     Evaluate a new model over T iterations.
 
@@ -271,18 +270,37 @@ def evaluateModel(T: int,
     Returns:
         Dict: A dictionary of statistics extracted from the model after each iteration.
     """    
+    print("Model evaluation started.")
+    print(f"Number of repetitions = {num_repetitions}")
     print("Initializing model with parameters")
-    print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
-    
+    print("N = {} - pa = {} \n mu = {} - m = {} \n kappa = {} - lambda = {} \n alpha = {} - omega = {} \n gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     start = time.time()
-    model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
-
-    for i in range(T):
-        simulate(model)
+    initial_model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
+    model_initialization_time = time.time() - start
+    print(f"Model initialized. Execution time: {np.round(model_initialization_time/60, 2)} minutes")
     
-    end = time.time()
-    elapsedTime = end - start
-    print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} seconds")        
+    print("\nStarting simulations.")
+    simulation_time = []
+    # statistics = []
+    for repetition in range(1, num_repetitions + 1):
+        print(f"Repetition {repetition}/{num_repetitions}")
+        model = deepcopy(initial_model)
+        start = time.time()
+        for i in range(T):
+            simulate(model)
+        repetition_time = time.time() - start
+        print(f"Finished simulation. Elapsed time: {np.round(repetition_time/60, 2)}.")
+        # start = time.time()
+        # print("Computing statistics.")
+        # statisticsHandler.compute(model)
+        # statistics_time = time.time() - start
+        # print(f"Finished computing statistics. Elapsed time: {statistics_time/60}")
+        # simulation_time.append(repetition_time + statistics_time)
+        simulation_time.append(repetition_time)
+        print(f"Finished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)}")
+        
+    elapsedTime = sum(simulation_time) + model_initialization_time        
+    print(f"Simulation ended. Total elapsed time = {np.round(elapsedTime, 2)} seconds")        
     return elapsedTime
 
 def simulate(M: Model):
