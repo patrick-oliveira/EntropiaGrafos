@@ -4,12 +4,13 @@ import time
 from random import sample
 from copy import deepcopy
 
-from Scripts.Types import Dict
+from Scripts.Types import Dict, List, Tuple
 from Scripts.Individual import Individual
 from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
                                   distort, getInfo, getTendency
 from Scripts.Entropy import JSD
 from Scripts.Parameters import pa, memory_size, code_length, seed, N
+from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -60,6 +61,7 @@ class Model:
         
         
         self.create_graph()
+        self.E = self.G.number_of_edges()
         if initialize: self.initialize_model_info()
 
     @property
@@ -96,6 +98,13 @@ class Model:
         """        
         self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
         
+    def compute_model_measures(self):
+        self.compute_edge_weights()
+        self.compute_sigma_attribute()
+        self.compute_graph_entropy()
+        self.compute_mean_edge_weight()
+        # self.compute_graph_polarity()
+        
     def initialize_model_info(self):
         """
         Initialize the model by creating the individual's information and computing the necessary parameters and measures.
@@ -106,10 +115,7 @@ class Model:
         for node in self.G:
             self.update_node_info(node)
             
-        self.compute_edge_weights()
-        self.compute_sigma_attribute()
-        self.compute_graph_entropy()
-        # self.compute_graph_polarity()
+        self.compute_model_measures()
         
     def update_model(self):
         """
@@ -119,12 +125,7 @@ class Model:
         for node in self.G:
             self.update_node_info(node, update_memory = True)
         
-        self.compute_edge_weights()
-        self.compute_sigma_attribute()
-        self.compute_graph_entropy()
-        self.compute_mean_edge_weight()
-        # self.compute_graph_polarity()
-        
+        self.compute_model_measures()
         
     def update_node_info(self, node: int, update_memory: bool = False):
         """
@@ -240,8 +241,7 @@ class Model:
         -------
         None.
         '''
-        edge_weights = nx.get_edge_attributes(self.G, 'Distance')
-        self._J = sum([edge_weights[edge] for edge in self.G.edges])/self.N
+        self._J = sum([self.G[u][v]['Distance'] for u, v in self.G.edges])/self.E
         
     def compute_graph_polarity(self) -> None:
         """
@@ -254,7 +254,7 @@ def evaluateModel(T: int,
                   kappa: float, lambd: float,
                   alpha: float, omega: float,
                   gamma: float,
-                  num_repetitions: int = 1) -> Dict:
+                  num_repetitions: int = 1) -> Tuple[float, List[Dict], Dict]:
     """
     Evaluate a new model over T iterations.
 
@@ -273,35 +273,34 @@ def evaluateModel(T: int,
     print("Model evaluation started.")
     print(f"Number of repetitions = {num_repetitions}")
     print("Initializing model with parameters")
-    print("N = {} - pa = {} \n mu = {} - m = {} \n kappa = {} - lambda = {} \n alpha = {} - omega = {} \n gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+    print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     start = time.time()
     initial_model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
     model_initialization_time = time.time() - start
-    print(f"Model initialized. Execution time: {np.round(model_initialization_time/60, 2)} minutes")
+    print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
     
-    print("\nStarting simulations.")
+    print("\nStarting simulations.\n")
     simulation_time = []
-    # statistics = []
+    statistic_handler = StatisticHandler()
+    statistic_handler.new_statistic('Entropy', MeanEntropy())
+    statistic_handler.new_statistic('Proximity', MeanProximity())
     for repetition in range(1, num_repetitions + 1):
         print(f"Repetition {repetition}/{num_repetitions}")
         model = deepcopy(initial_model)
         start = time.time()
         for i in range(T):
             simulate(model)
+            statistic_handler.update_statistics(model)
         repetition_time = time.time() - start
-        print(f"Finished simulation. Elapsed time: {np.round(repetition_time/60, 2)}.")
-        # start = time.time()
-        # print("Computing statistics.")
-        # statisticsHandler.compute(model)
-        # statistics_time = time.time() - start
-        # print(f"Finished computing statistics. Elapsed time: {statistics_time/60}")
-        # simulation_time.append(repetition_time + statistics_time)
         simulation_time.append(repetition_time)
-        print(f"Finished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)}")
+        print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+        statistic_handler.end_repetition()
         
     elapsedTime = sum(simulation_time) + model_initialization_time        
-    print(f"Simulation ended. Total elapsed time = {np.round(elapsedTime, 2)} seconds")        
-    return elapsedTime
+    print(f"\nSimulation ended. Total elapsed time = {np.round(elapsedTime/60, 2)} minutes")        
+    mean_statistics = statistic_handler.get_rep_mean()
+    rep_statistics  = statistic_handler.get_statistics(rep_stats = True)
+    return elapsedTime, rep_statistics, mean_statistics
 
 def simulate(M: Model):
     """
