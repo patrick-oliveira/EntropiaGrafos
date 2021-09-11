@@ -1,0 +1,10 @@
+name: entropia_grafos
+dependencies:
+  - matplotlib
+  - seaborn
+  - numpy
+  - jupyter
+  - jupyterlab
+  - notebook
+  - ipython
+  - networkx 
