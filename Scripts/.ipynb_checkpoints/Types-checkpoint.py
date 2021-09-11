@@ -1,10 +1,11 @@
 import networkx as nx
-from typing import NewType, List, Dict
+import numpy as np
+from typing import NewType, List, Dict, Tuple
 
 Graph = NewType('Graph', nx.Graph)
+Array = NewType('Array', np.array)
 Binary = NewType('Binary', str)
-LBinary = NewType('Binary', List[int])
-Memory = NewType('Memory', List[LBinary])
+Memory = NewType('Memory', List[Binary])
 CodeDistribution = NewType('CodeDistribution', Dict[Binary, float])
 Weights = NewType('Weights', List[float])
 TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])

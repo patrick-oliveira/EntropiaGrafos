@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from typing import NewType, List, Dict
+from typing import NewType, List, Dict, Tuple
 
 Graph = NewType('Graph', nx.Graph)
 Array = NewType('Array', np.array)

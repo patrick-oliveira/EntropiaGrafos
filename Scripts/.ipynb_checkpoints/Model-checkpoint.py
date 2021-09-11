@@ -1,15 +1,16 @@
 import networkx as nx
 import numpy as np
+import time
 from random import sample
+from copy import deepcopy
 
-from Scripts.Types import Dict
+from Scripts.Types import Dict, List, Tuple
 from Scripts.Individual import Individual
-from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, distort, getInfo, getTendency
+from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
+                                  distort, getInfo, getTendency
 from Scripts.Entropy import JSD
 from Scripts.Parameters import pa, memory_size, code_length, seed, N
-from Scripts.Memory import A, binary_to_string
-from time import time
-from copy import deepcopy
+from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -60,6 +61,7 @@ class Model:
         
         
         self.create_graph()
+        self.E = self.G.number_of_edges()
         if initialize: self.initialize_model_info()
 
     @property
@@ -73,6 +75,10 @@ class Model:
         return self._H
     
     @property
+    def J(self) -> float:
+        return self._J
+    
+    @property
     def pi(self) -> float:
         """
         Mean polarity.
@@ -84,13 +90,20 @@ class Model:
     
     @property
     def G(self): 
-        return self._G # Defined at "build_model()"
+        return self._G
         
     def create_graph(self):
         """
         Edite esta função para permitir a criação de redes com topologias diferentes. A função deve receber um nome identificando o tipo de rede, e/ou uma função de criação da rede.
         """        
         self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        
+    def compute_model_measures(self):
+        self.compute_edge_weights()
+        self.compute_sigma_attribute()
+        self.compute_graph_entropy()
+        self.compute_mean_edge_weight()
+        # self.compute_graph_polarity()
         
     def initialize_model_info(self):
         """
@@ -102,23 +115,17 @@ class Model:
         for node in self.G:
             self.update_node_info(node)
             
-        self.compute_edge_weights()
-        self.compute_sigma_attribute()
-        self.compute_graph_entropy()
-        # self.compute_graph_polarity()
+        self.compute_model_measures()
         
     def update_model(self):
         """
         Updates the network information (individual's information and all measures based on entropy) after each iteration.
         """        
+        
         for node in self.G:
             self.update_node_info(node, update_memory = True)
         
-        self.compute_edge_weights()
-        self.compute_sigma_attribute()
-        self.compute_graph_entropy()
-        # self.compute_graph_polarity()
-        
+        self.compute_model_measures()
         
     def update_node_info(self, node: int, update_memory: bool = False):
         """
@@ -220,40 +227,34 @@ class Model:
         """        
         return getTendency(self.G, node) 
         
-    def compute_graph_entropy(self):
+    def compute_graph_entropy(self) -> None:
         """
         Computes the mean entropy of the network's individuals.
         """        
         self._H = sum([self.indInfo(node).H for node in self.G])/self.N
         
-    def compute_graph_polarity(self):
+    def compute_mean_edge_weight(self) -> None:
+        '''
+        Computes the mean distance of the networks edges.
+
+        Returns
+        -------
+        None.
+        '''
+        self._J = sum([self.G[u][v]['Distance'] for u, v in self.G.edges])/self.E
+        
+    def compute_graph_polarity(self) -> None:
         """
         Computes the mean polarity of the network's individuals.
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
-        
-    def compute_info_distribution(self):
-        hist = {info:0 for info in self.indInfo(0).P.keys()}
-        N = 0
-        
-        for node in self.G:
-            for info in self.indInfo(node).L[0]:
-                info = binary_to_string(info)
-                hist[info] += 1
-                N += 1
-        
-        dist = {}
-        
-        for info in hist.keys():
-            dist[info] = hist[info]/N
-        
-        return dist
     
 
 def evaluateModel(T: int,
                   kappa: float, lambd: float,
                   alpha: float, omega: float,
-                  gamma: float) -> Dict:
+                  gamma: float,
+                  num_repetitions: int = 1) -> Tuple[float, List[Dict], Dict]:
     """
     Evaluate a new model over T iterations.
 
@@ -269,64 +270,53 @@ def evaluateModel(T: int,
     Returns:
         Dict: A dictionary of statistics extracted from the model after each iteration.
     """    
+    print("Model evaluation started.")
+    print(f"Number of repetitions = {num_repetitions}")
     print("Initializing model with parameters")
-    print("N = {} - pa = {} - mu = {} - m = {} - kappa = {} - lambda = {} - alpha = {} - omega = {} - gamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+    print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+    start = time.time()
+    initial_model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
+    model_initialization_time = time.time() - start
+    print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
     
-    model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
-    
-    D = deepcopy(A)
-    for code in D.keys():
-        D[code] = []
+    print("\nStarting simulations.\n")
+    simulation_time = []
+    statistic_handler = StatisticHandler()
+    statistic_handler.new_statistic('Entropy', MeanEntropy())
+    statistic_handler.new_statistic('Proximity', MeanProximity())
+    for repetition in range(1, num_repetitions + 1):
+        print(f"Repetition {repetition}/{num_repetitions}")
+        model = deepcopy(initial_model)
+        start = time.time()
+        for i in range(T):
+            simulate(model)
+            statistic_handler.update_statistics(model)
+        repetition_time = time.time() - start
+        simulation_time.append(repetition_time)
+        print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+        statistic_handler.end_repetition()
         
-    statistics = {}
-    statistics['H']  = []
-    statistics['Distribution'] = D
-    # statistics['pi - seed = {}'.format(model.seed)] = []
-    update_statistics(model, statistics)
+    elapsedTime = sum(simulation_time) + model_initialization_time        
+    print(f"\nSimulation ended. Total elapsed time = {np.round(elapsedTime/60, 2)} minutes")        
+    mean_statistics = statistic_handler.get_rep_mean()
+    rep_statistics  = statistic_handler.get_statistics(rep_stats = True)
+    return elapsedTime, rep_statistics, mean_statistics
 
-    elapsedTime = 0
-
-    for i in range(T):
-#         print(f"Starting iteration {i}")
-        execution_time = simulate(model)
-        elapsedTime += execution_time
-#         print(f"Iteration {i} ended - Execution Time = {np.round(execution_time, 5)}")
-        update_statistics(model, statistics)
-    
-        
-    print(f"Simulation ended. Execution time = {np.round(elapsedTime, 2)} min")        
-    return elapsedTime, statistics
-
-def simulate(M: Model) -> float:
+def simulate(M: Model):
     """
-    Execute one iteration of the information propagation model, updating the model's parameters at the end. Return the execution time (minutes).
+    Execute one iteration of the information propagation model, updating the model's parameters at the end. 
+    Return the execution time (minutes).
 
     Args:
         M (Model): A model instance.  
 
     Returns:
-        float: Execution time.
-    """    
-    start = time()
+        None.
+    """
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
         u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
-        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))     
-    end = time()
+        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
     
     M.update_model()
-    return (end - start)/60
-
-def update_statistics(M: Model, statistics: Dict):
-    """Updates statistics extracted from the model.
-
-    Args:
-        M (Model): A model instance.
-        statistics (Dict): A dictionary with the statistics arrays to be updated.
-    """ 
-    statistics['H'].append(M.H)
-    dist = M.compute_info_distribution()
-    for code in statistics['Distribution'].keys():
-        statistics['Distribution'][code].append(dist[code])
-    # statistics['pi - seed = {}'.format(M.seed)].append(M.pi)
