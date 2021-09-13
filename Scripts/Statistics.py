@@ -197,6 +197,13 @@ class MeanProximity(Statistic):
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
+    
+class MeanDelta(Statistic):
+    def compute(self, model) -> float:
+        return np.asarray([ind.delta for ind in model.ind_vertex_object]).mean()
+    
+    def get_rep_mean(self, statistics: np.array) -> np.array:
+        return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
 
 
 class InformationDistribution(Statistic):
@@ -215,15 +222,9 @@ class InformationDistribution(Statistic):
             DESCRIPTION.
 
         '''
-        histogram = np.arange(2**code_length)
-        num_codes = N * memory_size
-        
-        for node in model.G:
-            memory = (powers_of_two*node.L[0]).sum(axis = 1)
-            for code in memory:
-                histogram[code] += 1
-                
-        probability_distribution = histogram / num_codes
-        
-        return probability_distribution
+        P = np.asarray([sample_ind.P*model.mu for sample_ind in model.ind_vertex_object]).sum(axis = 0)/(model.mu*model.N)
+        return P
+    
+    def get_rep_mean(self, statistics: np.array) -> np.array:
+        return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
         

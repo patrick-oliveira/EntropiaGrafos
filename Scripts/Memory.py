@@ -1,6 +1,6 @@
 import numpy as np
 from Scripts.Types import Memory, Binary, CodeDistribution
-from Scripts.Parameters import code_length, memory_size
+from Scripts.Parameters import code_length, memory_size, seed
 from Scripts.Polarity import polarity
 
 

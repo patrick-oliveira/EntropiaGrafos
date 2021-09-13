@@ -4,6 +4,7 @@ from Scripts.Individual import Individual
 from Scripts.Entropy import JSD
 from Scripts.Parameters import code_length
 
+np.random.seed(50)
     
 def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
     """
@@ -16,33 +17,7 @@ def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
     Returns:
         [Binary]: The incoming binary code, if accepted, otherwise "None".
     """   
-    return code if (np.random.uniform() <= acceptance_probability) else None
-
-def getInfo(G: Graph, node: int) -> Individual:
-    """
-    Return the 'Individual' object from a give vertex id.
-
-    Args:
-        G (Graph): The graph model.
-        node (int): A vertex id.
-
-    Returns:
-        Individual: The 'Individual' object contained within the specified vertex.
-    """    
-    return G.nodes[node]['Object']
-
-def getTendency(G: Graph, node: int) -> str:
-    """
-    Return the polarization tendency of a given node.
-
-    Args:
-        G (Graph): The graph model.
-        node (int): A vertex id.
-
-    Returns:
-        str: A string which can assume the values "Up", "Down" or None.
-    """
-    return G.nodes[node]['Tendency']    
+    return code if (np.random.uniform() <= acceptance_probability) else None   
 
 def get_transition_probabilities(ind: Individual, tendency:str = None) -> TransitionProbabilities:
     """
@@ -55,10 +30,34 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
     Returns:
         TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
     """    
-    return (lambda x: (1 - x)*ind.delta + x*ind.delta) if tendency == 'Up' else \
-           (lambda x: (1 - x)*ind.delta + x*ind.delta) if tendency == 'Up' else \
-           (lambda x: (1 - x)*ind.delta + x*ind.delta)
+    return {0: ind.delta, 1: ind.delta} if tendency == 1 else \
+           {0: ind.delta, 1: ind.delta} if tendency == -1 else \
+           {0: ind.delta, 1: ind.delta}
           
+# def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
+#     """
+#     Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
+
+#     Args:
+#         code (Binary): A binary code.
+#         transition_probability (TransitionProbabilities): The probabilitions for the transitions 0 -> 1 and 1 -> 0.
+
+#     Returns:
+#         Binary: A possibily bitwise distorted code.
+#     """    
+#     # get the mutation probability for each bit of "code"
+#     transition_probabilities = transition_probability(code)
+#     # get a vector of random numbers with same size as "code"
+#     random_numbers = np.random.uniform(size = code_length)
+#     # get a vector identifying which bits will be mutated
+#     mutate = (random_numbers <= transition_probabilities).astype(int)
+#     # get the arguments for all bits which will be mutated
+#     # mutate = np.argwhere(mutate).reshape(-1)
+#     # mutate all selected bits (inverting its values)
+#     code[mutate] = np.logical_not(code[mutate]).astype(int)
+    
+#     return code
+
 def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
     """
     Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
@@ -69,19 +68,19 @@ def distort(code: Binary, transition_probability: TransitionProbabilities) -> Bi
 
     Returns:
         Binary: A possibily bitwise distorted code.
-    """    
-    # get the mutation probability for each bit of "code"
-    transition_probabilities = transition_probability(code)
-    # get a vector of random numbers with same size as "code"
-    random_numbers = np.random.uniform(size = code_length)
-    # get a vector identifying which bits will be mutated
-    mutate = (random_numbers <= transition_probabilities).astype(int)
-    # get the arguments for all bits which will be mutated
-    # mutate = np.argwhere(mutate).reshape(-1)
-    # mutate all selected bits (inverting its values)
-    code[mutate] = np.logical_not(code[mutate]).astype(int)
-    
+    """ 
+    for k in range(len(code)):
+        code[k] = mutate(code[k], transition_probability)
+        
     return code
+
+def mutate(bit: int, transition_probability: TransitionProbabilities) -> Binary:
+    x = np.random.uniform()
+    p = transition_probability[bit]
+    if x <= p:
+        return int(not bit)
+    else:
+        return bit
 
 def proximity(u: Individual, v:Individual) -> float:
     """

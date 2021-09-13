@@ -18,6 +18,24 @@ class Individual:
     def L(self):
         return self._L
     
+    @property
+    def X(self) -> Binary:
+        """
+        Return a randomly selected binary code based on the memory's probability distribution.
+
+        Returns:
+            Binary: A binary code (numpy array of bits)
+        """        
+        return self.select_information()
+    
+    @property 
+    def H(self):
+        return self._H
+    
+    @property
+    def delta(self):
+        return self._delta
+    
     @L.setter
     def L(self, memory: Memory):
         """
@@ -30,22 +48,6 @@ class Individual:
         self.P  = probability_distribution(self.L)
         self.compute_entropy()
         # self.compute_polarization()
-    
-    @property
-    def X(self) -> Binary:
-        """
-        Return a randomly selected binary code based on the memory's probability distribution.
-
-        Returns:
-            Binary: A binary code (numpy array of bits)
-        """        
-        return self.select_information()
-    
-    # Setters are used to make it explicit that some parameters exists and are computed elsewhere, e.g. "compute_entropy".
-    
-    @property 
-    def H(self):
-        return self._H
 
     def compute_entropy(self):
         """
@@ -53,10 +55,6 @@ class Individual:
         """
         self._H = memory_entropy(self.P)
         self.compute_conservation_factor()
-    
-    @property
-    def delta(self):
-        return self._delta
     
     def compute_conservation_factor(self):
         """
