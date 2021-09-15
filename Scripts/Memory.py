@@ -1,8 +1,8 @@
 import numpy as np
 from Scripts.Types import Memory, Binary, CodeDistribution
-from Scripts.Parameters import code_length, memory_size, seed
+from Scripts.Parameters import code_length, memory_size
 from Scripts.Polarity import polarity
-
+from copy import deepcopy
 
 def initialize_memory() -> Memory:
     """
@@ -91,6 +91,9 @@ def binary_to_int(x: Binary) -> str:
 def string_to_binary(x: str) -> Binary:
     return np.asarray(list(x)).astype(int)
 
+def binary_to_string(x: Binary) -> str:
+    return ''.join(list(x.astype(str)))
+
 def probability_distribution(memory: Memory) -> CodeDistribution:
     """
     Return a probability distribution defined over a list of binary codes.
@@ -100,20 +103,39 @@ def probability_distribution(memory: Memory) -> CodeDistribution:
 
     Returns:
         CodeDistribution: An numpy array with probabilities for each code (identified by its integer value - array index).
-    """    
+    """   
     probability_distribution = np.zeros(2**code_length)
     integers = np.matmul(memory[0], powers_of_two)
-    
     for code in integers:
         probability_distribution[code] += 1
         
     probability_distribution /= memory_size
-    
+    prob = {code:probability_distribution[k] for k, code in enumerate(_A.keys())}
+    return prob
     # unique_codes, num_ocurrencies = np.unique(memory[0], axis = 0, return_counts = True)
-    # for code, num in zip(unique_codes, num_ocurrencies):
-    #     probability_distribution[binary_to_int(code)] = num / memory_size
-        
-    return probability_distribution
+    # incomplete_probability_distribution = {binary_to_string(code) : num/memory_size  for code, num in zip(unique_codes, num_ocurrencies)}
+    # complete_dist = complete_probability_distribution(incomplete_probability_distribution)
+    # # return np.asarray(list(complete_dist.values()))
+    # return complete_dist
+
+
+def complete_probability_distribution(incomplete_distribution: CodeDistribution) -> CodeDistribution:
+    """
+    Receives a probability distribution of an individual's memory. The memory may or may not countain all the possible informations of the Alphabet, 
+    hence this function creates another dictionary with all codes from the Alphabet and attributes the correct probabilities from the individual's distribution.
+
+    Args:
+        incomplete_distribution (CodeDistribution): A probability distribution of an individual's memory that may be incomplete.
+
+    Returns:
+        CodeDistribution: An extension of the initial distribution including all the possible codes from the Alphabet.
+    """    
+    new_A = deepcopy(_A)
+    
+    for code in incomplete_distribution:
+        new_A[code] = incomplete_distribution[code]
+    
+    return new_A  
 
 def random_selection(distribution: CodeDistribution) -> Binary:
     '''
@@ -124,11 +146,60 @@ def random_selection(distribution: CodeDistribution) -> Binary:
     '''
     x = np.random.uniform()
     cumulative_probability = 0
-    for n in A.keys():
-        cumulative_probability += distribution[n]
+    for code in distribution.keys():
+        cumulative_probability += distribution[code]
         if cumulative_probability >= x:
-            return A[n]
+            return string_to_binary(code)
+
+# def random_selection(distribution):
+#     '''
+#     Input:
+#         distribution: A probability distribution over a list of binary codes.
+        
+#     Select randomly a binary code from a given distribution.
+#     '''
+#     x = np.random.uniform()
+#     distribution = list(distribution.values())
+#     cumulative_probability = 0
+#     for code in A.keys():
+#         cumulative_probability += distribution[code]
+#         if cumulative_probability >= x:
+#             return A[code]
+
+# def probability_distribution(memory: Memory) -> CodeDistribution:
+#     """
+#     Return a probability distribution defined over a list of binary codes.
+
+#     Args:
+#         memory (Memory): A Memory object (array of binary codes and its polarities)
+
+#     Returns:
+#         CodeDistribution: An numpy array with probabilities for each code (identified by its integer value - array index).
+#     """    
+#     probability_distribution = np.zeros(2**code_length)
+#     integers = np.matmul(memory[0], powers_of_two)
+    
+#     for code in integers:
+#         probability_distribution[code] += 1
+        
+#     probability_distribution /= memory_size
+        
+#     return probability_distribution
+
+# def random_selection(distribution: CodeDistribution) -> Binary:
+#     '''
+#     Input:
+#         distribution: A probability distribution over a list of binary codes.
+        
+#     Select randomly a binary code from a given distribution.
+#     '''
+#     x = np.random.uniform()
+#     cumulative_probability = 0
+#     for n in A.keys():
+#         cumulative_probability += distribution[n]
+#         if cumulative_probability >= x:
+#             return A[n]
         
 powers_of_two = 2**np.arange(code_length)[::-1]        
-
 A = {n:generate_code(n, code_length) for n in range(2**code_length)}           # Alphabet (work on that later)
+_A = {binary_to_string(generate_code(n, code_length)):generate_code(n, code_length) for n in range(2**code_length)}            # Alphabet (work on that later)

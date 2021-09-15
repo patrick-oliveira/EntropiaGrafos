@@ -73,6 +73,7 @@ class Individual:
         return random_selection(self.P)
     
     def update_memory(self):
+        # Arrume isso aqui para incluir a polaridade
         if len(self.L_temp) > 0:
             self.L = [np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):], self.L[1]]
             self.L_temp = []

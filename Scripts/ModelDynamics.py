@@ -2,7 +2,6 @@ import numpy as np
 from Scripts.Types import Graph, TransitionProbabilities, Binary
 from Scripts.Individual import Individual
 from Scripts.Entropy import JSD
-from Scripts.Parameters import code_length
 
 np.random.seed(50)
     
@@ -114,4 +113,7 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     max_sigma = max(set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))]))
     
     sigma_ratio =(G.degree[v]**gamma)/max_sigma
-    return 2/( 1/G[u][v]['Distance'] + 1/sigma_ratio )
+    return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
+
+
+e = 1e-10

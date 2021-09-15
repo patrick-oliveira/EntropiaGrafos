@@ -1,19 +1,14 @@
-from Scripts.Model import evaluateModel
+from Scripts.Model import evaluateModel, initialize_model
+from Scripts.Parameters import N, memory_size, code_length, kappa, alpha, omega, lambd, gamma, prefferential_att, \
+                               num_repetitions, T, seed
 
 
 def main():
-    kappa = 10           # Parameter for information distortion tendency
-    alpha = 0.5          # Proportion of individuals with tendency to increase polarity
-    omega = 0.5          # Proportion of individuals with tendency to lower polarity
-    lambd = 5            # Polarization coefficient
-    gamma = 5.0          # Confidence factor
-
-    T = 150
+    model = initialize_model(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
+    elapsedTime, rep_statistics, mean_statistics = evaluateModel(model, T, num_repetitions = num_repetitions)
     
-    execution_time = evaluateModel(T, kappa, lambd, alpha, omega, gamma)
-    
-    return execution_time
+    return elapsedTime, rep_statistics, mean_statistics
 
 if __name__ == "__main__":
-    execution_time = main()
-    print(execution_time)
+    elapsedTime, rep_statistics, mean_statistics = main()
+    print(elapsedTime)

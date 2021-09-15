@@ -200,7 +200,8 @@ class MeanProximity(Statistic):
     
 class MeanDelta(Statistic):
     def compute(self, model) -> float:
-        return np.asarray([ind.delta for ind in model.ind_vertex_object]).mean()
+        
+        return np.asarray([model.ind_vertex_objects[node].delta for node in model.G]).mean()
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
@@ -222,7 +223,7 @@ class InformationDistribution(Statistic):
             DESCRIPTION.
 
         '''
-        P = np.asarray([sample_ind.P*model.mu for sample_ind in model.ind_vertex_object]).sum(axis = 0)/(model.mu*model.N)
+        P = np.asarray([model.ind_vertex_objects[node].P*model.mu for node in model.G]).sum(axis = 0)/(model.mu*model.N)
         return P
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
