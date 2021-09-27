@@ -5,6 +5,7 @@ from Scripts.Types import Memory, Binary
 from Scripts.Memory import initialize_memory, probability_distribution, random_selection
 from Scripts.Entropy import memory_entropy
 from Scripts.Parameters import max_H
+from Scripts.Polarity import polarity
 import random
 
 class Individual:
@@ -47,7 +48,7 @@ class Individual:
         self._L = memory
         self.P  = probability_distribution(self.L)
         self.compute_entropy()
-        # self.compute_polarization()
+        self.compute_polarization()
 
     def compute_entropy(self):
         """
@@ -62,20 +63,21 @@ class Individual:
         """        
         self._delta = 1/(np.exp(self.kappa*(max_H - self.H)/max_H) + 1)
     
-    # @property
-    # def pi(self):
-    #     return self._pi
+    @property
+    def pi(self):
+        return self._pi
 
-    # def compute_polarization(self):
-    #     self._pi = sum([code[1] for code in self.L])/self.mu
+    def compute_polarization(self):
+        self._pi = self.L[1].mean()
 
     def select_information(self):
         return random_selection(self.P)
     
     def update_memory(self):
-        # Arrume isso aqui para incluir a polaridade
         if len(self.L_temp) > 0:
-            self.L = [np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):], self.L[1]]
+            polarity_array = polarity(np.asarray(self.L_temp))
+            self.L = [np.append(self.L[0], self.L_temp, axis = 0)[len(self.L_temp):], \
+                      np.append(self.L[1], polarity_array, axis = 0)[len(self.L_temp):]]
             self.L_temp = []
         
     def receive_information(self, new_code: Binary):

@@ -20,7 +20,6 @@ def memory_entropy(distribution: CodeDistribution) -> float:
 def JSD(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
     M = {code:(Pu[code] + Pv[code])/2 for code in Pu}
     
-    # return (D(Pu, M) + D(Pv, M))/2
     return memory_entropy(M) - (memory_entropy(Pu) + memory_entropy(Pv))/2
 
 def D(P: CodeDistribution, Q: CodeDistribution) -> float:
@@ -34,6 +33,9 @@ def _D(P: CodeDistribution, Q: CodeDistribution, x: Binary):
             return np.inf
         else:
             return P[x]*np.log2(P[x]/Q[x])
+
+def S(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
+    return 1 - JSD(Pu, Pv)
 
 # def JSD(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
 #     M = (Pu + Pv)/2

@@ -29,8 +29,8 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
     Returns:
         TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
     """    
-    return {0: ind.delta, 1: ind.delta} if tendency == 1 else \
-           {0: ind.delta, 1: ind.delta} if tendency == -1 else \
+    return {0: ind.delta + ind.xi, 1: ind.delta} if tendency == 1 else \
+           {0: ind.delta, 1: ind.delta + ind.xi} if tendency == -1 else \
            {0: ind.delta, 1: ind.delta}
           
 # def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:

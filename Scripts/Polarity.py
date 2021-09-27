@@ -10,7 +10,7 @@ def polarity_weights() -> Weights:
     Returns:
         Weights: A numpy array of 'm' normalized random values.
     """    
-    v = abs(np.random.randn(code_length))
+    v = np.ones(code_length)
     return v/sum(v)
 
 def polarity(x: Binary) -> float:

@@ -1,25 +1,25 @@
-from graph_tool.generation import price_network
+import networkx as nx
 import numpy as np
 import time
 from random import sample
 from copy import deepcopy
-from functools import partial
 
 from Scripts.Types import Dict, List, Tuple
 from Scripts.Individual import Individual
-from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, distort
-from Scripts.Entropy import JSD
-from Scripts.Parameters import memory_size, code_length, seed, N
-from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, InformationDistribution, MeanDelta
+from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
+                                  distort
+from Scripts.Entropy import S
+from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
+                               InformationDistribution
 
 class Model:
-    def __init__(self, N: int,                              # Graph Parameters
-                       mu: int, m: int,                     # Memory Parameters
-                       kappa: float, lambd: float,          # Proccess Parameters
-                       alpha: float, omega: float,          # Population Parameters
-                       gamma: float,                        # Information Dissemination Parameters
-                       initialize: bool = True,
-                       prefferential_att: int = 1):
+    def __init__(self, N: int, pa: int,            # Graph Parameters
+                       mu: int, m: int,            # Memory Parameters
+                       kappa: float, lambd: float, # Proccess Parameters
+                       alpha: float, omega: float, # Population Parameters
+                       gamma: float,               # Information Dissemination Parameters
+                       seed: int,
+                       initialize: bool = True):
         """
         
         The model is created by the following sequence of steps:
@@ -43,104 +43,95 @@ class Model:
             lambd (float): Polarization coefficient.
             alpha (float): Proportion of individuals who polarize upwards.
             omega (float): Proportion of individuals who polarize downwards.
-        """  
+        """        
         # Network parameters
-        self.N = N
-        self.prefferential_att = prefferential_att
+        self.N  = N
+        self.pa = pa
         
         # Individual parameters
-        self.mu = mu
-        self.m = m
+        self.mu    = mu
+        self.m     = m
         self.kappa = kappa
         self.alpha = alpha
         self.omega = omega
         self.lambd = lambd
         self.gamma = gamma
         
-        self.create_graph()
-        if initialize: self.initialize_model_information()
+        self.seed = seed
         
+        
+        self.create_graph()
+        self.E = self.G.number_of_edges()
+        if initialize: self.initialize_model_info()
+
     @property
-    def G(self):
+    def H(self) -> float:
+        """
+        Mean Entropy
+
+        Returns:
+            [float]: Mean entropy of all the individuals
+        """        
+        return self._H
+    
+    @property
+    def J(self) -> float:
+        return self._J
+    
+    @property
+    def pi(self) -> float:
+        """
+        Mean polarity.
+
+        Returns:
+            float: Mean polarity value of all individuals.
+        """        
+        return self._pi
+    
+    @property
+    def G(self): 
         return self._G
     
     @property
-    def E(self):
-        return self._E
+    def ind_vertex_objects(self):
+        return self._ind_vertex_objects
     
     @property
-    def ind_vertex_object(self):
-        return self._ind_vertex_object
-    
-    @property
-    def vertex_tendency_property(self):
-        return self._vertex_tendency_property
-    
-    @property
-    def sigma_property(self):
-        return self._sigma_property
-    
-    @property
-    def edge_weight_property(self):
-        return self._edge_weight_property
-    
-    @property
-    def node_degrees(self):
-        return self._node_degrees
-    
-    @property
-    def H(self):
-        return self._H
-
-    @property
-    def J(self):
-        return self._J 
+    def vertex_tendencies(self):
+        return self._vertex_tendencies
         
     def create_graph(self):
-        self._G = price_network(N = self.N, gamma = self.prefferential_att, directed = False)
-        self._E = self.G.num_edges()
-        self._node_degrees = self.G.get_total_degrees(self.G.get_vertices())
+        """
+        Edite esta função para permitir a criação de redes com topologias diferentes. A função deve receber um nome identificando o tipo de rede, e/ou uma função de criação da rede.
+        """        
+        self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
         
-    def initialize_model_information(self):
+    def compute_model_measures(self):
+        self.compute_edge_weights()
+        self.compute_sigma_attribute()
+        self.compute_graph_entropy()
+        self.compute_mean_edge_weight()
+        self.compute_graph_polarity()
+        
+    def initialize_model_info(self):
         """
         Initialize the model by creating the individual's information and computing the necessary parameters and measures.
         """        
         self.initialize_nodes()
         self.group_individuals()
-        
-        for node in self.G.iter_vertices():
-            self.update_node_information(node)
-            
         self.compute_model_measures()
         
-    def initialize_nodes(self):
+    def update_model(self):
         """
-        Attribute to each node in the network a new instance of 'Individual'.
-        """
-        self._ind_vertex_object= np.asarray([Individual(self.kappa) for n in range(self.N)])
-        self._vertex_tendency_property = self.G.new_vertex_property("short")
-        self._sigma_property = self.G.new_vertex_property("double")
-        self._edge_weight_property = self.G.new_edge_property("double")
-        
-    def group_individuals(self):
-        """
-        Individuals are randomly grouped accordingly to their polarization tendencies.
+        Updates the network information (individual's information and all measures based on entropy) after each iteration.
         """        
-        indices = np.asarray(sample(list(range(self.N)), k = self.N))
         
-        positive_tendency = indices[:int(self.alpha*self.N)]
-        negative_tendency = indices[int(self.alpha*self.N):int(self.alpha*self.N) + int(self.omega*self.N)]
-        neutral_tendency  = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
+        for node in self.G:
+            self.update_node_info(node, update_memory = True)
         
-        vertices = np.zeros(self.N)
-        vertices[positive_tendency] = 1
-        vertices[negative_tendency] = -1
-        vertices[neutral_tendency]  = 0
+        self.compute_model_measures()
         
-        self.vertex_tendency_property.a = vertices
-        
-        
-    def update_node_information(self, node: int, update_memory: bool = False):
+    def update_node_info(self, node: int, update_memory: bool = False):
         """
         A function used to update the state of each node in the network. 
         After each iteration, this function is called with update_memory = True to possibly include new information in each individual's memory. After that, polarization and distortion probabilities are updated.
@@ -149,120 +140,136 @@ class Model:
             node (int): A vertex id.
             update_memory (bool, optional): A boolean which specifies if the individual's memory must be updated or not. Defaults to False.
         """        
-        individual = self.ind_vertex_object[node]
-        tendency   = self.vertex_tendency_property[node]
+        individual = self.indInfo(node)
         
         if update_memory:
             individual.update_memory()
+        
+    def initialize_nodes(self):
+        """
+        Attribute to each node in the network a new instance of 'Individual'.
+        """
+        nx.set_node_attributes(self.G, 
+                               {node : Individual(self.kappa) \
+                                                    for node in self.G}, 
+                               name = 'Object')
+        self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
             
-        # compute polarity probability
-        # mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
-        # setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))    
-        # Updates the information distortion probabilities based on entropic effects and polarzation bias
-        setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency))
-        
-    def update_model(self):
+    def group_individuals(self):
         """
-        Updates the network information (individual's information and all measures based on entropy) after each iteration.
-        """   
-        for node in self.G.iter_vertices():
-            self.update_node_information(node, update_memory = True)
-        self.compute_model_measures()
-    
-    def compute_model_measures(self):
-        self.compute_edge_weights()
-        self.compute_sigma_attribute()
-        self.compute_graph_entropy()
-        self.compute_mean_edge_weight()
-        # self.compute_graph_polarity()
-        
-    def compute_edge_weights(self):
-        """
-        Used the Jensen-Shannon Divergence to attribute edge weights, measuring ideological proximity.
+        Individuals are randomly grouped accordingly to their polarization tendencies.
         """        
-        self.edge_weight_property.a = np.apply_along_axis(self._compute_edge_weight, 1, self.G.get_edges())
+        indices = sample(list(range(self.N)), k = self.N)
+        group_a = indices[:int(self.alpha*self.N)]
+        group_b = indices[int(self.alpha*self.N): int(self.alpha*self.N) + int(self.omega*self.N)]
+        group_c = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
         
-    def _compute_edge_weight(self, edge: np.array) -> float:
-        u = self.ind_vertex_object[edge[0]]
-        v = self.ind_vertex_object[edge[1]]
+        attribute_dict = {}
+        attribute_dict.update({list(self.G.nodes())[i]:1 for i in group_a})
+        attribute_dict.update({list(self.G.nodes())[i]:-1 for i in group_b})
+        attribute_dict.update({list(self.G.nodes())[i]:0 for i in group_c})
         
-        distance = 1 - JSD(u.P, v.P)
-        
-        return distance
+        nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
+        self._vertex_tendencies = nx.get_node_attributes(self.G, 'Tendency')
         
     def compute_sigma_attribute(self):
         """
         Uses the edge weights to measure popularity of each node.
         """        
-        vertices = np.expand_dims(self.G.get_vertices(), 1)
-        self.sigma_property.a = np.apply_along_axis(self._compute_sigma_attribute, 1, vertices)
-        
-    def _compute_sigma_attribute(self, node: int) -> float:
-        neighbors_info = self.G.get_all_edges(node, eprops = [self.edge_weight_property])
-        return neighbors_info.T[2].sum()
-        
-    def compute_graph_entropy(self):
+        for node in self.G:
+            individual = self.indInfo(node)
+            tendency   = self.indTendency(node)
+            global_proximity = sum([self.G.edges[(node, neighbor)]['Distance'] for neighbor in self.G.neighbors(node)])
+            setattr(individual, 'sigma', global_proximity)
+            setattr(individual, 'xi', 1 / (np.exp(individual.sigma * self.lambd) + 1))  
+            setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency)) 
+            
+            
+    def compute_edge_weights(self):
         """
-        Computes the mean entropy of the network's individuals.
+        Used the Jensen-Shannon Divergence to attribute edge weights, measuring ideological proximity.
         """        
-        self._H = sum([ind.H for ind in self.ind_vertex_object])/self.N
-    
-    def compute_mean_edge_weight(self):
-        '''
-        Computes the mean distance of the networks edges.
-        '''
-        self._J = (self.edge_weight_property.a.sum()/self.E).item()
-        
-    def compute_graph_polarity(self) -> None:
-        return None
-    
-    def get_acceptance_probability(self, edge: np.array) -> float:
+        nx.set_edge_attributes(self.G, 
+                               {(u, v):(S(self.indInfo(u).P, self.indInfo(v).P)) \
+                                                                for u, v in self.G.edges}, 
+                               'Distance')
+            
+    def get_acceptance_probability(self, u: int, v:int) -> float:
         """
         Gets the probability that individual "u" will accept an information transmited by "v" based on ideological proximity and perception of relative popularity.
 
         Args:
-            u (int): The vertex index of an individual "u".dd
+            u (int): The vertex index of an individual "u".
             v (int): The vertex index of an indiviudal "v".
 
         Returns:
-            float: The \eta_{v to u} probability.
-        """      
-        u = edge[0]
-        v = edge[1]
-        edge = self.G.edge(u, v)
-        distance = np.max([self.edge_weight_property[edge], epsilon])
-        return distance
-#         sigma_ratio = np.max([self.calc_sigma_ratio(u, v), epsilon])
-#         return 2/( 1/distance + 1/sigma_ratio)
+            float: The \eta_{u to v} probability.
+        """        
+        return acceptance_probability(self.G, u, v, self.gamma)
         
-    def calc_sigma_ratio(self, u: int, v: int) -> float:
-        calc_sigma = lambda x: (self.node_degrees[x] + epsilon)**self.gamma
-        
-        neighbor_max_sigma = calc_sigma(self.G.get_all_neighbors(u)).max()
-        u_sigma        = calc_sigma(u)
-        max_sigma = np.max([neighbor_max_sigma, u_sigma])
-        
-        sigma_ratio = calc_sigma(v) / max_sigma
-        
-        return sigma_ratio
+    def indInfo(self, node: int) -> Individual:
+        """
+        Gets the "Individual" instance corresponding to a given node index.
+
+        Args:
+            node (int): A vertex index.
+
+        Returns:
+            Individual: An instance of "Individual".
+        """        
+        return self.ind_vertex_objects[node]
     
-    
+    def indTendency(self, node: int) -> str:
+        """
+        Gets the polarization tendency of a given node index.
+
+        Args:
+            node (int): A vertex index.
+
+        Returns:
+            str: A string defining the polarization tendency of the node (Up, Down or None)
+        """        
+        return self.vertex_tendencies[node]
+        
+    def compute_graph_entropy(self) -> None:
+        """
+        Computes the mean entropy of the network's individuals.
+        """        
+        self._H = sum([self.indInfo(node).H for node in self.G])/self.N
+        
+    def compute_mean_edge_weight(self) -> None:
+        '''
+        Computes the mean distance of the networks edges.
+
+        Returns
+        -------
+        None.
+        '''
+        self._J = sum([self.G[u][v]['Distance'] for u, v in self.G.edges])/self.E
+        
+    def compute_graph_polarity(self) -> None:
+        """
+        Computes the mean polarity of the network's individuals.
+        """        
+        self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
+        
 def initialize_model(N: int, prefferential_att: float,
                      memory_size: int, code_length: int,
                      kappa: float, lambd: float,
                      alpha: float, omega: float,
-                     gamma: float) -> Model:
+                     gamma: float,
+                     seed: int) -> Model:
     print("Initializing model with parameters")
     print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
     start = time.time()
-    initial_model = Model(N, memory_size, code_length, kappa, lambd, alpha, omega, gamma, prefferential_att = prefferential_att)
+    initial_model = Model(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
     model_initialization_time = time.time() - start
     
     print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
     
-    return initial_model    
-    
+    return initial_model
+
 def evaluateModel(initial_model: Model,
                   T: int, num_repetitions: int = 1) -> Tuple[float, List[Dict], Dict]:
     """
@@ -276,7 +283,8 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Entropy', MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
     statistic_handler.new_statistic('Delta', MeanDelta())
-    statistic_handler.new_statistic('Distribution', InformationDistribution())
+    statistic_handler.new_statistic('Polarity', MeanPolarity())
+    # statistic_handler.new_statistic('Distribution', InformationDistribution())
     
     for repetition in range(1, num_repetitions + 1):
         print(f"Repetition {repetition}/{num_repetitions}")
@@ -312,20 +320,10 @@ def simulate(M: Model):
     Returns:
         None.
     """
-    edges = M.G.get_edges()
-    f = partial(_get_ind_object, M = M)
-    ind_objects = np.apply_along_axis(f, 1, edges)
-    for k, uv in enumerate(ind_objects):
-        u = uv[0]
-        v = uv[1]
-        u.receive_information(evaluate_information(distort(v.X, v.DistortionProbability), M.get_acceptance_probability(edges[k])))
-        v.receive_information(evaluate_information(distort(u.X, u.DistortionProbability), M.get_acceptance_probability(edges[k][::-1])))
+    for u, v in M.G.edges():
+        u_ind = M.indInfo(u)
+        v_ind = M.indInfo(v)
+        u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
+        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
     
     M.update_model()
-    
-def _get_ind_object(edge: np.array, M: Model) -> np.array:
-    return M.ind_vertex_object[edge]
-        
-        
-                                    
-epsilon = np.finfo(float).eps

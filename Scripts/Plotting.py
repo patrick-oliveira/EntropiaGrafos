@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns
+import numpy as np
+from typing import Tuple, List
 
 def heat_plot(X: np.array, size: Tuple[int] = None,
               x_tick_labels: List[str] = None,

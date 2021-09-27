@@ -8,8 +8,9 @@ from Scripts.Types import Dict, List, Tuple
 from Scripts.Individual import Individual
 from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
                                   distort
-from Scripts.Entropy import JSD
-from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, InformationDistribution
+from Scripts.Entropy import S
+from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
+                               InformationDistribution
 
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
@@ -110,7 +111,7 @@ class Model:
         self.compute_sigma_attribute()
         self.compute_graph_entropy()
         self.compute_mean_edge_weight()
-        # self.compute_graph_polarity()
+        self.compute_graph_polarity()
         
     def initialize_model_info(self):
         """
@@ -118,10 +119,6 @@ class Model:
         """        
         self.initialize_nodes()
         self.group_individuals()
-        
-        for node in self.G:
-            self.update_node_info(node)
-            
         self.compute_model_measures()
         
     def update_model(self):
@@ -144,16 +141,9 @@ class Model:
             update_memory (bool, optional): A boolean which specifies if the individual's memory must be updated or not. Defaults to False.
         """        
         individual = self.indInfo(node)
-        tendency   = self.indTendency(node)
         
         if update_memory:
             individual.update_memory()
-            
-        # compute polarity probability
-        # mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
-        # setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))    
-        # Updates the information distortion probabilities based on entropic effects and polarzation bias
-        setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency))   
         
     def initialize_nodes(self):
         """
@@ -175,9 +165,9 @@ class Model:
         group_c = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
         
         attribute_dict = {}
-        attribute_dict.update({list(self.G.nodes())[i]:'Up' for i in group_a})
-        attribute_dict.update({list(self.G.nodes())[i]:'Down' for i in group_b})
-        attribute_dict.update({list(self.G.nodes())[i]:'-' for i in group_c})
+        attribute_dict.update({list(self.G.nodes())[i]:1 for i in group_a})
+        attribute_dict.update({list(self.G.nodes())[i]:-1 for i in group_b})
+        attribute_dict.update({list(self.G.nodes())[i]:0 for i in group_c})
         
         nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
         self._vertex_tendencies = nx.get_node_attributes(self.G, 'Tendency')
@@ -187,16 +177,21 @@ class Model:
         Uses the edge weights to measure popularity of each node.
         """        
         for node in self.G:
+            individual = self.indInfo(node)
+            tendency   = self.indTendency(node)
             global_proximity = sum([self.G.edges[(node, neighbor)]['Distance'] for neighbor in self.G.neighbors(node)])
-            setattr(self.indInfo(node), 'sigma', global_proximity)
+            setattr(individual, 'sigma', global_proximity)
+            setattr(individual, 'xi', 1 / (np.exp(individual.sigma * self.lambd) + 1))  
+            setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency)) 
+            
             
     def compute_edge_weights(self):
         """
         Used the Jensen-Shannon Divergence to attribute edge weights, measuring ideological proximity.
         """        
         nx.set_edge_attributes(self.G, 
-                               {(u, v):(1 - JSD(self.indInfo(u).P, self.indInfo(v).P)) \
-                                                                    for u, v in self.G.edges}, 
+                               {(u, v):(S(self.indInfo(u).P, self.indInfo(v).P)) \
+                                                                for u, v in self.G.edges}, 
                                'Distance')
             
     def get_acceptance_probability(self, u: int, v:int) -> float:
@@ -288,6 +283,7 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Entropy', MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
     statistic_handler.new_statistic('Delta', MeanDelta())
+    statistic_handler.new_statistic('Polarity', MeanPolarity())
     # statistic_handler.new_statistic('Distribution', InformationDistribution())
     
     for repetition in range(1, num_repetitions + 1):
