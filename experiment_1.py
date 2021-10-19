@@ -5,9 +5,11 @@ from pathlib import Path
 import pickle 
 
 if __name__ == "__main__":
-    _N = [500, 1000, 1500, 2000, 2500, 3000]
+#     _N = [500, 1000, 1500, 2000, 2500, 3000]
     prefferential_att = 2
-    _memory_size = [50, 100, 150, 200, 250, 300]
+#     _memory_size = [50, 100, 150, 200, 250, 300]
+    _N = [3000]
+    _memory_size = [250, 300]
     code_length = 5
     
 #     kappa = 1
