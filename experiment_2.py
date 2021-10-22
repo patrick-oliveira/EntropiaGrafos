@@ -17,7 +17,8 @@ if __name__ == "__main__":
     code_length = 5
     
     # gamma_list = [-5, -1, 0, 1, 5]
-    gamma_list = [-5, -1, 0]
+    # gamma_list = [-5, -1, 0]
+    gamma_list = [0]
     kappa_list = [0, 5, 10, 15, 20]
     lambd = 0
     alpha = 0
