@@ -258,36 +258,44 @@ def initialize_model(N: int, prefferential_att: float,
                      kappa: float, lambd: float,
                      alpha: float, omega: float,
                      gamma: float,
-                     seed: int) -> Model:
-    print("Initializing model with parameters")
-    print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+                     seed: int, verbose: bool = False) -> Model:
+    if verbose:
+        print("Initializing model with parameters")
+        print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
     start = time.time()
     initial_model = Model(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
     model_initialization_time = time.time() - start
     
-    print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
+    if verbose:
+        print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
     
     return initial_model
 
+def Parallel_evaluateModel(initial_model: Model,
+                           T: int, num_repetitions: int, verbose: bool = False) -> Tuple[Float, List[Dict], Dict]:
+    return None
+
 def evaluateModel(initial_model: Model,
-                  T: int, num_repetitions: int = 1) -> Tuple[float, List[Dict], Dict]:
+                  T: int, num_repetitions: int = 1, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
     """
     Evaluate a new model over T iterations.
     """    
-    print("Model evaluation started.")
-    print(f"Number of repetitions = {num_repetitions}")
-    print("\nStarting simulations.\n")
+    if verbose:
+        print("Model evaluation started.")
+        print(f"Number of repetitions = {num_repetitions}")
+        print("\nStarting simulations.\n")
+        
     simulation_time = []
     statistic_handler = StatisticHandler()
-    statistic_handler.new_statistic('Entropy', MeanEntropy())
+    statistic_handler.new_statistic('Entropy',   MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
-    statistic_handler.new_statistic('Delta', MeanDelta())
-    statistic_handler.new_statistic('Polarity', MeanPolarity())
-    # statistic_handler.new_statistic('Distribution', InformationDistribution())
+    statistic_handler.new_statistic('Delta',     MeanDelta())
+    statistic_handler.new_statistic('Polarity',  MeanPolarity())
     
     for repetition in range(1, num_repetitions + 1):
-        print(f"Repetition {repetition}/{num_repetitions}")
+        if verbose:
+            print(f"Repetition {repetition}/{num_repetitions}")
         
         model = deepcopy(initial_model)
         
@@ -298,7 +306,8 @@ def evaluateModel(initial_model: Model,
         repetition_time = time.time() - start
         simulation_time.append(repetition_time)
         
-        print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+        if verbose:
+            print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
         
         statistic_handler.end_repetition()
         

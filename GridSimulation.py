@@ -8,13 +8,16 @@ import pickle
 
 def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     N, mu, prefferential_att, code_length, kappa,\
-    gamma, lambd, alpha, omega, T, num_repetitions, seed = params
+                      gamma, lambd, alpha, omega = params
+
+    identifier = (N, mu, prefferential_att, code_length, kappa, gamma, lambd, alpha, omega,
+                  parameters['T'], parameters['num_repetitions'], parameters['seed'])
 
     print(f"Simulating model with parameters tuple: {params}")
     start = time()
-    model = initialize_model(N, prefferential_att, mu, code_length, kappa, lambd, alpha, omega, gamma, seed)
-    _, _, mean_statistics = evaluateModel(model, T, num_repetitions)
-    print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {start - time()} s")
+    model = initialize_model(N, prefferential_att, mu, code_length, kappa, lambd, alpha, omega, gamma, parameters['seed'])
+    elapsedTime, rep_statistics, mean_statistics = evaluateModel(model, parameters['T'], parameters['num_repetitions'])
+    print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {time() - start} s")
     
     return (params, mean_statistics)
         
@@ -22,34 +25,35 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
 
 if __name__ == "__main__":
     parameters = {
-        'network_size':  [500, 1000],
-        'memory_size': [50, 100],
+        'network_size':  [500, 1000, 2000],
+        'memory_size': [50, 100, 200],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa': [0],
-        'gamma': [0],
+        'kappa':[-1, 0, 1],
+        'gamma': [-1, 0, 1],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 150,
+        'T': 100,
         'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("Experiments/Experiment 1/")
+        'path_str': Path("experiments/experiment_1/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
     with open(parameters['path_str'] / 'description.txt', 'w') as file:
-        file.write("Simulations of the model without polarization, variying kappa and the size of the network, but keeping the others parameters fixed.\n")
+        file.write("Simulations of the model without polarization, variying kappa, gamma and the size of the network, but keeping the others parameters fixed.\n")
         file.write("Parameters:\n")
         file.write(str(parameters))
     
     params_cartesian_product = product(parameters['network_size'], parameters['memory_size'], 
                                        parameters['prefferential_att'], parameters['code_length'], 
                                        parameters['kappa'], parameters['gamma'], parameters['lambda'], 
-                                       parameters['alpha'], parameters['omega'], parameters['T'], 
-                                       parameters['num_repetitions'], parameters['seed'])
+                                       parameters['alpha'], parameters['omega'])
     params_cartesian_product = list(params_cartesian_product)
     results_dictionary = {}
+    
+    print(f"Initializing simulations with {parameters['T']} iterations, for {parameters['num_repetitions']} repetitions.")
     
     with Pool() as pool:
         result = pool.map(worker, params_cartesian_product)
@@ -57,18 +61,5 @@ if __name__ == "__main__":
     for identifier, statistics in result:
         results_dictionary[identifier] = statistics
     
-    pickle.dump(results_dictionary, open(parameters['path_str'] / "simulation_results.pickle", "wb"))
-        
-    # for N, mu, prefferential_att, code_length,\
-    #     kappa, gamma, lambd, alpha, omega, T, num_repetitions, seed in params_cartesian_product:
-            
-    #         model = initialize_model(N, prefferential_att, mu, code_length, kappa, lambd, alpha, omega, gamma, seed)
-    #         _, _, mean_statistics = evaluateModel(model, T, num_repetitions)
-            
-    #         identifier = (N, mu, prefferential_att, code_length, kappa, gamma, lambd, alpha, omega, T, num_repetitions, seed)
-    #         results_dictionary[identifier] = mean_statistics
-            
-    #         # Saving partial results
-            
-    #         pickle.dump(results_dictionary, open(parameters['path_str'] / "simulation_results.pickle", "wb"))         
+    pickle.dump(results_dictionary, open(parameters['path_str'] / "simulation_results.pickle", "wb"))       
     
