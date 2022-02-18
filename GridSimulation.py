@@ -9,12 +9,12 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     N, mu, prefferential_att, code_length, kappa,\
     gamma, lambd, alpha, omega, T, num_repetitions, seed = params
 
+    print(f"Simulating model with parameters tuple: {params}")
     model = initialize_model(N, prefferential_att, mu, code_length, kappa, lambd, alpha, omega, gamma, seed)
     _, _, mean_statistics = evaluateModel(model, T, num_repetitions)
+    print(f"Finished simulation of model with parameters tuple: {params}")
     
-    identifier = (N, mu, prefferential_att, code_length, kappa, gamma, lambd, alpha, omega, T, num_repetitions, seed)
-    
-    return (identifier, mean_statistics)
+    return (params, mean_statistics)
         
     
 
