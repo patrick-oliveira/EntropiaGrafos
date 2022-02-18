@@ -8,3 +8,4 @@ dependencies:
   - notebook
   - ipython
   - networkx 
+  - spyder
