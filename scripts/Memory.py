@@ -1,7 +1,7 @@
 import numpy as np
-from Scripts.Types import Memory, Binary, CodeDistribution
-from Scripts.Parameters import code_length, memory_size
-from Scripts.Polarity import polarity
+from scripts.Types import Memory, Binary, CodeDistribution
+from scripts.Parameters import code_length, memory_size
+from scripts.Polarity import polarity
 from copy import deepcopy
 
 def initialize_memory() -> Memory:

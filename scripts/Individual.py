@@ -1,11 +1,11 @@
 __package__ = None
 
 import numpy as np
-from Scripts.Types import Memory, Binary
-from Scripts.Memory import initialize_memory, probability_distribution, random_selection
-from Scripts.Entropy import memory_entropy
-from Scripts.Parameters import max_H
-from Scripts.Polarity import polarity
+from scripts.Types import Memory, Binary
+from scripts.Memory import initialize_memory, probability_distribution, random_selection
+from scripts.Entropy import memory_entropy
+from scripts.Parameters import max_H
+from scripts.Polarity import polarity
 import random
 
 class Individual:

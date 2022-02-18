@@ -1,8 +1,8 @@
 import pickle
 import numpy as np
-from Scripts.Memory import powers_of_two
-from Scripts.Parameters import N, memory_size, code_length
-from Scripts.Types import Dict
+from scripts.Memory import powers_of_two
+from scripts.Parameters import N, memory_size, code_length
+from scripts.Types import Dict
 from copy import deepcopy
 
 class Statistic:

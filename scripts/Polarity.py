@@ -1,6 +1,6 @@
 import numpy as np
-from Scripts.Types import Weights, Binary
-from Scripts.Parameters import code_length, seed
+from scripts.Types import Weights, Binary
+from scripts.Parameters import code_length, seed
 
 def polarity_weights() -> Weights:
     """

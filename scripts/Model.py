@@ -4,12 +4,12 @@ import time
 from random import sample
 from copy import deepcopy
 
-from Scripts.Types import Dict, List, Tuple
-from Scripts.Individual import Individual
-from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
+from scripts.Types import Dict, List, Tuple
+from scripts.Individual import Individual
+from scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
                                   distort
-from Scripts.Entropy import S
-from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
+from scripts.Entropy import S
+from scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
                                InformationDistribution
 
 class Model:

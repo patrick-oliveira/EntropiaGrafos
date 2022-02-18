@@ -1,7 +1,7 @@
 import numpy as np
-from Scripts.Types import Graph, TransitionProbabilities, Binary
-from Scripts.Individual import Individual
-from Scripts.Entropy import JSD
+from scripts.Types import Graph, TransitionProbabilities, Binary
+from scripts.Individual import Individual
+from scripts.Entropy import JSD
 
 np.random.seed(50)
     

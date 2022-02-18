@@ -1,7 +1,7 @@
 import numpy as np
-from Scripts.Types import CodeDistribution, Binary, Memory
-from Scripts.Parameters import code_length
-from Scripts.Memory import binary_to_string
+from scripts.Types import CodeDistribution, Binary, Memory
+from scripts.Parameters import code_length
+from scripts.Memory import binary_to_string
 from functools import partial
 
 

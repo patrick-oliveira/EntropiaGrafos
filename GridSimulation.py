@@ -3,6 +3,7 @@ from itertools import product
 from pathlib import Path
 from typing import Tuple 
 from multiprocessing import Pool
+from time import time
 import pickle 
 
 def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
@@ -10,9 +11,10 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     gamma, lambd, alpha, omega, T, num_repetitions, seed = params
 
     print(f"Simulating model with parameters tuple: {params}")
+    start = time()
     model = initialize_model(N, prefferential_att, mu, code_length, kappa, lambd, alpha, omega, gamma, seed)
     _, _, mean_statistics = evaluateModel(model, T, num_repetitions)
-    print(f"Finished simulation of model with parameters tuple: {params}")
+    print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {start - time()} s")
     
     return (params, mean_statistics)
         
@@ -20,11 +22,11 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
 
 if __name__ == "__main__":
     parameters = {
-        'network_size':  [500, 1000, 1500, 2000, 2500, 3000],
-        'memory_size': [50, 100, 150, 200, 250, 300],
+        'network_size':  [500, 1000],
+        'memory_size': [50, 100],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa': [0, 5, 10],
+        'kappa': [0],
         'gamma': [0],
         'lambda': [0],
         'alpha': [0],
