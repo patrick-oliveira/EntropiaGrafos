@@ -293,6 +293,7 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Delta',     MeanDelta())
     statistic_handler.new_statistic('Polarity',  MeanPolarity())
     
+    
     for repetition in range(1, num_repetitions + 1):
         if verbose:
             print(f"Repetition {repetition}/{num_repetitions}")
