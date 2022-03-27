@@ -12,6 +12,7 @@ from scripts.Entropy import S
 from scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
                                InformationDistribution
 
+
 class Model:
     def __init__(self, N: int, pa: int,            # Graph Parameters
                        mu: int, m: int,            # Memory Parameters
@@ -273,7 +274,7 @@ def initialize_model(N: int, prefferential_att: float,
     return initial_model
 
 def Parallel_evaluateModel(initial_model: Model,
-                           T: int, num_repetitions: int, verbose: bool = False) -> Tuple[Float, List[Dict], Dict]:
+                           T: int, num_repetitions: int, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
     return None
 
 def evaluateModel(initial_model: Model,

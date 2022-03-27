@@ -19,30 +19,30 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     elapsedTime, rep_statistics, mean_statistics = evaluateModel(model, parameters['T'], parameters['num_repetitions'])
     print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {time() - start} s")
     
-    return (params, mean_statistics)
+    return (params, mean_statistics, elapsedTime)
         
     
 
 if __name__ == "__main__":
     parameters = {
-        'network_size':  [500, 1000, 2000],
-        'memory_size': [50, 100, 200],
+        'network_size':  [1500],
+        'memory_size': [100],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa':[-1, 0, 1],
-        'gamma': [-1, 0, 1],
+        'kappa':[0, 5, 10, 15],
+        'gamma': [-7, -5, -3, -1, 0, 1, 3, 5, 7],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 100,
+        'T': 150,
         'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("experiments/experiment_1/")
+        'path_str': Path("experiments/experiment_2/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
     with open(parameters['path_str'] / 'description.txt', 'w') as file:
-        file.write("Simulations of the model without polarization, variying kappa, gamma and the size of the network, but keeping the others parameters fixed.\n")
+        file.write("Simulations of the model without polarization, variying gamma and kappa, but keeping the others parameters fixed.\n")
         file.write("Parameters:\n")
         file.write(str(parameters))
     
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     with Pool() as pool:
         result = pool.map(worker, params_cartesian_product)
         
-    for identifier, statistics in result:
-        results_dictionary[identifier] = statistics
+    for identifier, statistics, elapsedTime in result:
+        results_dictionary[identifier] = (statistics, elapsedTime)
     
     pickle.dump(results_dictionary, open(parameters['path_str'] / "simulation_results.pickle", "wb"))       
     
