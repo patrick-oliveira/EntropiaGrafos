@@ -29,13 +29,13 @@ if __name__ == "__main__":
         'memory_size': [100],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa':[0, 5, 10, 15],
-        'gamma': [-7, -5, -3, -1, 0, 1, 3, 5, 7],
+        'kappa': list(range(50)),
+        'gamma': [-5, -3, -2, -1, 0, 1, 2, 3, 5],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 150,
-        'num_repetitions': 5,
+        'T': 100,
+        'num_repetitions': 10,
         'seed': 42,
         'path_str': Path("experiments/experiment_2/")
     }

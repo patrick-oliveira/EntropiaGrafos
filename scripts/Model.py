@@ -275,7 +275,7 @@ def initialize_model(N: int, prefferential_att: float,
 
 def Parallel_evaluateModel(initial_model: Model,
                            T: int, num_repetitions: int, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
-    return None
+    pass
 
 def evaluateModel(initial_model: Model,
                   T: int, num_repetitions: int = 1, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
