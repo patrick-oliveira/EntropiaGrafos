@@ -25,7 +25,7 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
 
 if __name__ == "__main__":
     parameters = {
-        'network_size':  [1500],
+        'network_size':  [1000],
         'memory_size': [100],
         'prefferential_att': [2],
         'code_length': [5],
@@ -35,9 +35,9 @@ if __name__ == "__main__":
         'alpha': [0],
         'omega': [0],
         'T': 100,
-        'num_repetitions': 10,
+        'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("experiments/experiment_2/")
+        'path_str': Path("experiments/experiment_3/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
