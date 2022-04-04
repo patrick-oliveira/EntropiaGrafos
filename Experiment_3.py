@@ -30,20 +30,20 @@ if __name__ == "__main__":
         'memory_size': [100],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa': [0, 5, 8, 9.5, 10.5, 11.5, 15, 17, 20, 23, 25, 28, 30],
-        'gamma': [-3, -1, 0, 1, 3],
+        'kappa': [0, 10, 15, 30],
+        'gamma': [-5, 5],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 100,
+        'T': 1000,
         'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("experiments/experiment_2/")
+        'path_str': Path("experiments/experiment_3/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
     with open(parameters['path_str'] / 'description.txt', 'w') as file:
-        file.write("Simulations of the model without polarization, variying gamma and kappa, but keeping the others parameters fixed. Computes the information distribution.\n")
+        file.write(" ")
         file.write("Parameters:\n")
         file.write(str(parameters))
     

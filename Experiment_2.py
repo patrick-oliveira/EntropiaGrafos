@@ -31,7 +31,7 @@ if __name__ == "__main__":
         'prefferential_att': [2],
         'code_length': [5],
         'kappa': [0, 5, 8, 9.5, 10.5, 11.5, 15, 17, 20, 23, 25, 28, 30],
-        'gamma': [-3, -1, 0, 1, 3],
+        'gamma': [-5, 5],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
