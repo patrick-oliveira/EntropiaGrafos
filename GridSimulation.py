@@ -30,24 +30,15 @@ if __name__ == "__main__":
         'memory_size': [32, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7],
         'prefferential_att': [2],
         'code_length': [5],
-<<<<<<< HEAD
-        'kappa': [0, 5, 8, 9.5, 10.5, 11.5, 15, 17, 20, 23, 25, 28, 30],
-        'gamma': [-3, -1, 0, 1, 3],
-=======
         'kappa': [0, 1, 5],
         'gamma': [-1, 0, 1],
->>>>>>> 920e7d09e4cbb328cbaefa9a0117911c495b7b72
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
         'T': 100,
         'num_repetitions': 5,
         'seed': 42,
-<<<<<<< HEAD
-        'path_str': Path("experiments/experiment_2/")
-=======
         'path_str': Path("experiments/experiment_1/")
->>>>>>> 920e7d09e4cbb328cbaefa9a0117911c495b7b72
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
