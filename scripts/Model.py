@@ -291,9 +291,9 @@ def evaluateModel(initial_model: Model,
     statistic_handler = StatisticHandler()
     statistic_handler.new_statistic('Entropy',   MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
-    statistic_handler.new_statistic('Delta',     MeanDelta())
-    statistic_handler.new_statistic('Polarity',  MeanPolarity())
-    statistic_handler.new_statistic('Distribution', InformationDistribution())
+    # statistic_handler.new_statistic('Delta',     MeanDelta())
+    # statistic_handler.new_statistic('Polarity',  MeanPolarity())
+    # statistic_handler.new_statistic('Distribution', InformationDistribution())
     
     
     for repetition in range(1, num_repetitions + 1):

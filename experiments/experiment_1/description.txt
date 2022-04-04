@@ -1,3 +1,2 @@
-Simulations of the model without polarization, variying kappa, gamma and the size of the network, but keeping the others parameters fixed.
-Parameters:
-{'network_size': [500, 1000, 1500, 2000], 'memory_size': [50, 100, 150, 200], 'prefferential_att': [2], 'code_length': [5], 'kappa': [-1, 0, 1], 'gamma': [-1, 0, 1], 'lambda': [0], 'alpha': [0], 'omega': [0], 'T': 100, 'num_repetitions': 5, 'seed': 42, 'path_str': PosixPath('experiments/experiment_1')}
+-Parameters:
+{'network_size': [500, 1000, 1500, 2000], 'memory_size': [32, 64, 96, 128, 160, 192, 224], 'prefferential_att': [2], 'code_length': [5], 'kappa': [0, 1, 5], 'gamma': [-1, 0, 1], 'lambda': [0], 'alpha': [0], 'omega': [0], 'T': 100, 'num_repetitions': 5, 'seed': 42, 'path_str': PosixPath('experiments/experiment_1')}

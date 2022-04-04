@@ -26,24 +26,24 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
 
 if __name__ == "__main__":
     parameters = {
-        'network_size':  [1000],
-        'memory_size': [100],
+        'network_size':  [500, 1000, 1500, 2000],
+        'memory_size': [32, 32*2, 32*3, 32*4, 32*5, 32*6, 32*7],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa': [0, 5, 8, 9.5, 10.5, 11.5, 15],
-        'gamma': [-3, -1, 0, 1, 3],
+        'kappa': [0, 1, 5],
+        'gamma': [-1, 0, 1],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 500,
+        'T': 100,
         'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("experiments/experiment_5/")
+        'path_str': Path("experiments/experiment_1/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
     with open(parameters['path_str'] / 'description.txt', 'w') as file:
-        file.write("Simulations of the model without polarization, variying gamma and kappa, but keeping the others parameters fixed. Computes the information distribution.\n")
+        file.write("-")
         file.write("Parameters:\n")
         file.write(str(parameters))
     
