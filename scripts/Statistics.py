@@ -223,7 +223,7 @@ class InformationDistribution(Statistic):
             DESCRIPTION.
 
         '''
-        P = np.asarray([model.ind_vertex_objects[node].P*model.mu for node in model.G]).sum(axis = 0)/(model.mu*model.N)
+        P = np.asarray([model.ind_vertex_objects[node].P_array*model.mu for node in model.G]).sum(axis = 0)/(model.mu*model.N)
         return P
     
     def get_rep_mean(self, statistics: np.array) -> np.array:

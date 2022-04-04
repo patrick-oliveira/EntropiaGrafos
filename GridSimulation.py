@@ -5,6 +5,7 @@ from typing import Tuple
 from multiprocessing import Pool
 from time import time
 import pickle 
+import numpy as np
 
 def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     N, mu, prefferential_att, code_length, kappa,\
@@ -29,20 +30,20 @@ if __name__ == "__main__":
         'memory_size': [100],
         'prefferential_att': [2],
         'code_length': [5],
-        'kappa': list(range(50)),
-        'gamma': [-5, -3, -2, -1, 0, 1, 2, 3, 5],
+        'kappa': [0, 5, 8, 9.5, 10.5, 11.5, 15],
+        'gamma': [-3, -1, 0, 1, 3],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'T': 100,
+        'T': 500,
         'num_repetitions': 5,
         'seed': 42,
-        'path_str': Path("experiments/experiment_3/")
+        'path_str': Path("experiments/experiment_5/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
     with open(parameters['path_str'] / 'description.txt', 'w') as file:
-        file.write("Simulations of the model without polarization, variying gamma and kappa, but keeping the others parameters fixed.\n")
+        file.write("Simulations of the model without polarization, variying gamma and kappa, but keeping the others parameters fixed. Computes the information distribution.\n")
         file.write("Parameters:\n")
         file.write(str(parameters))
     

@@ -2,7 +2,7 @@
 # Graph Size
 N  = 100
 # Size of memory list
-memory_size = 10
+memory_size = 100
 # Length of binary codes
 code_length  = 5
 

@@ -9,10 +9,11 @@ from scripts.Polarity import polarity
 import random
 
 class Individual:
-    def __init__(self, kappa: float):
+    def __init__(self, kappa: float, memory_size: int):
         self.kappa = kappa
-        self.seed = random.randint(1, 100)                    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
-        self.L = initialize_memory()
+        self.memory_size = memory_size
+        self.seed = random.randint(1, 100)    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
+        self.L = initialize_memory(memory_size)
         self.L_temp = []
         
     @property
@@ -37,6 +38,10 @@ class Individual:
     def delta(self):
         return self._delta
     
+    @property
+    def P_array(self):
+        return np.array(list(self.P.values()))
+    
     @L.setter
     def L(self, memory: Memory):
         """
@@ -46,7 +51,7 @@ class Individual:
             memory (Memory): An array of binary codes.
         """
         self._L = memory
-        self.P  = probability_distribution(self.L)
+        self.P  = probability_distribution(self.L, self.memory_size)
         self.compute_entropy()
         self.compute_polarization()
 

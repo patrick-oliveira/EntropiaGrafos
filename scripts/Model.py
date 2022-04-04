@@ -151,7 +151,7 @@ class Model:
         Attribute to each node in the network a new instance of 'Individual'.
         """
         nx.set_node_attributes(self.G, 
-                               {node : Individual(self.kappa) \
+                               {node : Individual(self.kappa, self.mu) \
                                                     for node in self.G}, 
                                name = 'Object')
         self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
@@ -293,6 +293,7 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Proximity', MeanProximity())
     statistic_handler.new_statistic('Delta',     MeanDelta())
     statistic_handler.new_statistic('Polarity',  MeanPolarity())
+    statistic_handler.new_statistic('Distribution', InformationDistribution())
     
     
     for repetition in range(1, num_repetitions + 1):
