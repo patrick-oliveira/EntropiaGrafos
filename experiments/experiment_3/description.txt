@@ -1,2 +1,0 @@
- Parameters:
-{'network_size': [1000], 'memory_size': [100], 'prefferential_att': [2], 'code_length': [5], 'kappa': [0, 10, 15, 30], 'gamma': [-5, 5], 'lambda': [0], 'alpha': [0], 'omega': [0], 'T': 1000, 'num_repetitions': 5, 'seed': 42, 'path_str': PosixPath('experiments/experiment_3')}

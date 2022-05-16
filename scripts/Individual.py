@@ -15,6 +15,8 @@ class Individual:
         self.seed = random.randint(1, 100)    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
         self.L = initialize_memory(memory_size)
         self.L_temp = []
+        self.transmissions = 0
+        self.acceptances = 0
         
     @property
     def L(self):
@@ -85,6 +87,14 @@ class Individual:
                       np.append(self.L[1], polarity_array, axis = 0)[len(self.L_temp):]]
             self.L_temp = []
         
-    def receive_information(self, new_code: Binary):
+    def receive_information(self, new_code: Binary) -> bool:
         if not (new_code is None):
             self.L_temp.append(new_code)
+            return True
+        return False
+    
+    def transmitted(self):
+        self.transmissions += 1
+        
+    def received(self):
+        self.acceptances += 1

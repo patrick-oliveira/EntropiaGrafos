@@ -10,16 +10,17 @@ from scripts.ModelDynamics import acceptance_probability, get_transition_probabi
                                   distort
 from scripts.Entropy import S
 from scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, MeanDelta, MeanPolarity, \
-                               InformationDistribution
+                               InformationDistribution, MeanAcceptances, MeanTransmissions
 
 
 class Model:
-    def __init__(self, N: int, pa: int,            # Graph Parameters
+    def __init__(self, graph_type: str, N: int,    # Graph Parameters
                        mu: int, m: int,            # Memory Parameters
                        kappa: float, lambd: float, # Proccess Parameters
                        alpha: float, omega: float, # Population Parameters
                        gamma: float,               # Information Dissemination Parameters
                        seed: int,
+                       pa: int = None, d: int = None, p: float = None,      # Optional graph parameters
                        initialize: bool = True):
         """
         
@@ -48,6 +49,9 @@ class Model:
         # Network parameters
         self.N  = N
         self.pa = pa
+        self.d  = d
+        self.p  = p
+        self.graph_type = graph_type
         
         # Individual parameters
         self.mu    = mu
@@ -101,11 +105,18 @@ class Model:
     def vertex_tendencies(self):
         return self._vertex_tendencies
         
-    def create_graph(self):
+    def create_graph(self, graph_type: str = 'barabasi'):
         """
         Edite esta função para permitir a criação de redes com topologias diferentes. A função deve receber um nome identificando o tipo de rede, e/ou uma função de criação da rede.
-        """        
-        self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        """ 
+        if self.graph_type == 'barabasi':
+            self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        elif self.graph_type == 'complete':
+            self._G = nx.complete_graph(self.N)
+        elif self.graph_type == 'regular':
+            self._G = nx.random_regular_graph(n = self.N, d = self.d, seed = self.seed)
+        elif self.graph_type == 'erdos':
+            self._G = nx.erdos_renyi_graph(n = self.N, p = self.p, seed = self.seed)
         
     def compute_model_measures(self):
         self.compute_edge_weights()
@@ -254,18 +265,21 @@ class Model:
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
         
-def initialize_model(N: int, prefferential_att: float,
+def initialize_model(graph_type: str, N: int,
                      memory_size: int, code_length: int,
                      kappa: float, lambd: float,
                      alpha: float, omega: float,
                      gamma: float,
-                     seed: int, verbose: bool = False) -> Model:
+                     seed: int,
+                     prefferential_att: float = None, degree: int = None, edge_prob: float = None, 
+                     verbose: bool = False) -> Model:
     if verbose:
         print("Initializing model with parameters")
-        print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+        print("Graph_type = {} \t N = {} \t degree = {} \t edge_prob = {} \t pa = {} \nmu = {} \t m = {} \nkappa = {} \t lambda = {} \nalpha = {} \t omega = {} \ngamma = {}".format(graph_type, N, degree, edge_prob, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
     
     start = time.time()
-    initial_model = Model(N, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
+    initial_model = Model(graph_type = graph_type, N = N, mu = memory_size, m = code_length, kappa = kappa, lambd = lambd, alpha = alpha, omega = omega, gamma = gamma, seed = seed,
+                         pa = prefferential_att, d = degree, p = edge_prob)
     model_initialization_time = time.time() - start
     
     if verbose:
@@ -294,6 +308,8 @@ def evaluateModel(initial_model: Model,
     # statistic_handler.new_statistic('Delta',     MeanDelta())
     # statistic_handler.new_statistic('Polarity',  MeanPolarity())
     # statistic_handler.new_statistic('Distribution', InformationDistribution())
+    statistic_handler.new_statistic('Acceptance', MeanAcceptances())
+    statistic_handler.new_statistic('Transmission', MeanTransmissions())
     
     
     for repetition in range(1, num_repetitions + 1):
@@ -335,7 +351,13 @@ def simulate(M: Model):
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
-        u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
-        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        received = u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
+        if received:
+            v_ind.transmitted()
+            u_ind.received()
+        received = v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        if received:
+            u_ind.transmitted()
+            v_ind.received()
     
     M.update_model()

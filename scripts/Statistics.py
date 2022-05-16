@@ -205,8 +205,22 @@ class MeanDelta(Statistic):
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
-
-
+    
+class MeanTransmissions(Statistic):
+    def compute(self, model) -> float:
+        return np.asarray([(model.ind_vertex_objects[node].transmissions, model.G.degree[node]) for node in model.G])
+    
+    def get_rep_mean(self, statistics: np.array) -> np.array:
+        return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
+    
+class MeanAcceptances(Statistic):
+    def compute(self, model) -> float:
+        return np.asarray([(model.ind_vertex_objects[node].acceptances, model.G.degree[node]) for node in model.G])
+                          
+    def get_rep_mean(self, statistics: np.array) -> np.array:
+        return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
+                          
+                        
 class InformationDistribution(Statistic):
     def compute(self, model) -> np.array:
         '''
