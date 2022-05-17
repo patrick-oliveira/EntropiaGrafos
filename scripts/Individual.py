@@ -12,7 +12,7 @@ class Individual:
     def __init__(self, kappa: float, memory_size: int):
         self.kappa = kappa
         self.memory_size = memory_size
-        self.seed = random.randint(1, 100)    # Preciso inicializar tudo aleatoriamente, porém os resultados precisam ser reprodutíveis. Como isso deveria ser feito?
+        self.seed = random.randint(1, 100)
         self.L = initialize_memory(memory_size)
         self.L_temp = []
         self.transmissions = 0

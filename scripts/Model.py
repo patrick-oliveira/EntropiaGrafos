@@ -306,8 +306,8 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Entropy',   MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
     # statistic_handler.new_statistic('Delta',     MeanDelta())
-    # statistic_handler.new_statistic('Polarity',  MeanPolarity())
-    # statistic_handler.new_statistic('Distribution', InformationDistribution())
+    statistic_handler.new_statistic('Polarity',  MeanPolarity())
+    statistic_handler.new_statistic('Distribution', InformationDistribution())
     statistic_handler.new_statistic('Acceptance', MeanAcceptances())
     statistic_handler.new_statistic('Transmission', MeanTransmissions())
     
