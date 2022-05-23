@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from time import time
 import pickle 
 import numpy as np
+import os
 
 def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     graph_type, N, mu, code_length, kappa,\
@@ -20,6 +21,12 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     elapsedTime, rep_statistics, mean_statistics = evaluateModel(model, parameters['T'], parameters['num_repetitions'])
     print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {time() - start} s")
     
+    partial_result = {
+        params: (mean_statistics, rep_statistics)
+    }
+    identifier = '_'.join([str(x) for x in params])
+    pickle.dump(partial_result, open(parameters['path_str'] / f"{identifier}_partial_results.pickle", "wb"))  
+    
     return (params, mean_statistics, rep_statistics, elapsedTime)
         
     
@@ -27,19 +34,19 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
 if __name__ == "__main__":
     parameters = {
         'graph_type': ['barabasi'],
-        'network_size':  [2000],
+        'network_size':  [1000],
         'memory_size': [160],
         'code_length': [5],
-        'kappa': [0, 5, 10, 15, 30],
+        'kappa': [0, 10, 30],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'gamma': [-10, -5, -3, 0, 3, 5, 10],
-        'T': 100,
+        'gamma': [-10, -3, 0, 3, 10],
+        'T': 2000,
         'num_repetitions': 5,
         'seed': 42,
         'prefferential_att': [2],
-        'path_str': Path("experiments/experiment_7/")
+        'path_str': Path("experiments/experiment_13/")
     }
     
     parameters['path_str'].mkdir(parents = True, exist_ok = True)
@@ -65,5 +72,9 @@ if __name__ == "__main__":
         rep_results_dictionary[identifier]  = rep_statistics
     
     pickle.dump(mean_results_dictionary, open(parameters['path_str'] / "simulation_mean_results.pickle", "wb"))  
-    pickle.dump(rep_results_dictionary, open(parameters['path_str'] / "simulation_rep_results.pickle", "wb"))      
+    pickle.dump(rep_results_dictionary, open(parameters['path_str'] / "simulation_rep_results.pickle", "wb"))    
+    
+    partial_results = [x for x in os.listdir(parameters['path_str']) if 'partial_results' in x]  
+    for pr in partial_results:
+        os.remove(parameters['path_str'] / pr)
     
