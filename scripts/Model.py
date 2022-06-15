@@ -3,6 +3,9 @@ import numpy as np
 import time
 from random import sample
 from copy import deepcopy
+from pathlib import Path
+from typing import Union
+import pickle
 
 from scripts.Types import Dict, List, Tuple
 from scripts.Individual import Individual
@@ -292,7 +295,8 @@ def Parallel_evaluateModel(initial_model: Model,
     pass
 
 def evaluateModel(initial_model: Model,
-                  T: int, num_repetitions: int = 1, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
+                  T: int, num_repetitions: int = 1, last_run: int = 0, verbose: bool = False,
+                  save_runs: bool = False, save_path: Union[Path, str] = None) -> Tuple[float, List[Dict], Dict]:
     """
     Evaluate a new model over T iterations.
     """    
@@ -312,7 +316,7 @@ def evaluateModel(initial_model: Model,
     statistic_handler.new_statistic('Transmission', MeanTransmissions())
     
     
-    for repetition in range(1, num_repetitions + 1):
+    for repetition in range(last_run + 1, num_repetitions + 1):
         if verbose:
             print(f"Repetition {repetition}/{num_repetitions}")
         
@@ -329,6 +333,12 @@ def evaluateModel(initial_model: Model,
             print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
         
         statistic_handler.end_repetition()
+        
+        if save_runs:
+            with open(save_path / "model.pkl", "wb") as file:
+                pickle.dump(model, file)
+            with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
+                pickle.dump(statistic_handler.repetitions[-1], file)
         
     elapsedTime = sum(simulation_time)
     
