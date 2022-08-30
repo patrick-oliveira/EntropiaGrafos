@@ -22,20 +22,23 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
         print("No previous runs found. Creating new model.")
         os.makedirs(outputPath)
         model = initialize_model(graph_type = graph_type, N = N, memory_size = mu, code_length = code_length, kappa = kappa, lambd = lambd, alpha = alpha, omega = omega, gamma = gamma, seed = parameters['seed'], prefferential_att = prefferential_att)
+        with open(outputPath / "model.pkl", "wb") as file:
+            pickle.dump(model, file)
         num_repetitions = parameters['num_repetitions']
         T = parameters['T']
         last_run = 0
     else:
-        print("Found previous runs. Loading model.")
-        model = pickle.load(open(outputPath / "model.pkl", "rb"))
-        
         runs = os.listdir(outputPath)
         runs = [x for x in runs if "run" in x]
         runs = [x.split("_")[1] for x in runs]
         runs = [int(x) for x in runs]
         last_run = max(runs)
         
-        num_repetitions = parameters['num_repetitions'] - last_run
+        print(f"Found previous runs. Last run: {last_run}.")
+        
+        model = pickle.load(open(outputPath / "model.pkl", "rb"))
+        
+        num_repetitions = parameters['num_repetitions']
         T = parameters['T']
         
     print(f"Starting simulation.")
@@ -53,11 +56,11 @@ if __name__ == "__main__":
         'network_size':  [1000],
         'memory_size': [160],
         'code_length': [5],
-        'kappa': [0, 15, 30],
+        'kappa': [30],
         'lambda': [0],
         'alpha': [0],
         'omega': [0],
-        'gamma': [-3, 0, 3],
+        'gamma': [3],
         'T': 5000,
         'num_repetitions': 200,
         'seed': 42,
@@ -82,6 +85,8 @@ if __name__ == "__main__":
     
     with Pool() as pool:
         result = pool.map(worker, params_cartesian_product)
+        
+    result = [x for x in result if x != None]
         
     for identifier, mean_statistics, rep_statistics, elapsedTime in result:
         mean_results_dictionary[identifier] = mean_statistics

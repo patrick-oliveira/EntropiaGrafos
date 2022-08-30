@@ -268,48 +268,82 @@ class Model:
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
         
-def initialize_model(graph_type: str, N: int,
-                     memory_size: int, code_length: int,
-                     kappa: float, lambd: float,
-                     alpha: float, omega: float,
-                     gamma: float,
-                     seed: int,
-                     prefferential_att: float = None, degree: int = None, edge_prob: float = None, 
-                     verbose: bool = False) -> Model:
+def initialize_model(
+    graph_type: str, 
+    network_size: int,
+    memory_size: int, 
+    code_length: int,
+    kappa: float, 
+    lambd: float,
+    alpha: float, 
+    omega: float,
+    gamma: float,
+    seed: int,
+    prefferential_att: float = None, 
+    degree: int = None, 
+    edge_prob: float = None, 
+    verbose: bool = False,
+    worker_id: int = None,
+    *args,
+    **kwargs,
+) -> Model:
+    worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
     if verbose:
-        print("Initializing model with parameters")
-        print("Graph_type = {} \t N = {} \t degree = {} \t edge_prob = {} \t pa = {} \nmu = {} \t m = {} \nkappa = {} \t lambda = {} \nalpha = {} \t omega = {} \ngamma = {}".format(graph_type, N, degree, edge_prob, prefferential_att, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
+        print(worker_id + "Initializing model.")
     
     start = time.time()
-    initial_model = Model(graph_type = graph_type, N = N, mu = memory_size, m = code_length, kappa = kappa, lambd = lambd, alpha = alpha, omega = omega, gamma = gamma, seed = seed,
-                         pa = prefferential_att, d = degree, p = edge_prob)
+    initial_model = Model(
+        graph_type = graph_type, 
+        N = network_size, 
+        mu = memory_size, 
+        m = code_length, 
+        kappa = kappa, 
+        lambd = lambd, 
+        alpha = alpha, 
+        omega = omega, 
+        gamma = gamma, 
+        seed = seed,
+        pa = prefferential_att, 
+        d = degree, 
+        p = edge_prob
+    )
     model_initialization_time = time.time() - start
     
     if verbose:
-        print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
+        print(worker_id + f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} min")
     
     return initial_model
 
-def Parallel_evaluateModel(initial_model: Model,
-                           T: int, num_repetitions: int, verbose: bool = False) -> Tuple[float, List[Dict], Dict]:
+def Parallel_evaluateModel(
+    initial_model: Model,
+    T: int, 
+    num_repetitions: int, 
+    verbose: bool = False
+) -> Tuple[float, List[Dict], Dict]:
     pass
 
-def evaluateModel(initial_model: Model,
-                  T: int, num_repetitions: int = 1, last_run: int = 0, verbose: bool = False,
-                  save_runs: bool = False, save_path: Union[Path, str] = None) -> Tuple[float, List[Dict], Dict]:
+def evaluateModel(
+    initial_model: Model,
+    T: int, 
+    num_repetitions: int = 1, 
+    last_run: int = 0, 
+    verbose: bool = False,
+    save_runs: bool = False, 
+    save_path: Union[Path, str] = None,
+    worker_id: int = None,
+) -> Tuple[float, StatisticHandler]:
     """
     Evaluate a new model over T iterations.
-    """    
+    """
+    worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
     if verbose:
-        print("Model evaluation started.")
-        print(f"Number of repetitions = {num_repetitions}")
-        print("\nStarting simulations.\n")
+        print(worker_id + "Model evaluation started.")
+        print(worker_id + f"Number of repetitions = {num_repetitions}")
         
     simulation_time = []
     statistic_handler = StatisticHandler()
     statistic_handler.new_statistic('Entropy',   MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
-    # statistic_handler.new_statistic('Delta',     MeanDelta())
     statistic_handler.new_statistic('Polarity',  MeanPolarity())
     statistic_handler.new_statistic('Distribution', InformationDistribution())
     statistic_handler.new_statistic('Acceptance', MeanAcceptances())
@@ -318,7 +352,7 @@ def evaluateModel(initial_model: Model,
     
     for repetition in range(last_run + 1, num_repetitions + 1):
         if verbose:
-            print(f"Repetition {repetition}/{num_repetitions}")
+            print(worker_id + f"Repetition {repetition}/{num_repetitions}")
         
         model = deepcopy(initial_model)
         
@@ -330,22 +364,17 @@ def evaluateModel(initial_model: Model,
         simulation_time.append(repetition_time)
         
         if verbose:
-            print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+            print(worker_id + f"Finished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
         
         statistic_handler.end_repetition()
         
         if save_runs:
-            with open(save_path / "model.pkl", "wb") as file:
-                pickle.dump(model, file)
             with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
                 pickle.dump(statistic_handler.repetitions[-1], file)
         
     elapsedTime = sum(simulation_time)
     
-    mean_statistics = statistic_handler.get_rep_mean()
-    rep_statistics  = statistic_handler.get_statistics(rep_stats = True)
-    
-    return elapsedTime, rep_statistics, mean_statistics
+    return elapsedTime, statistic_handler
 
 def simulate(M: Model):
     """

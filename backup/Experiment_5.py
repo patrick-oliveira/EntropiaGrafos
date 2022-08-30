@@ -28,8 +28,8 @@ if __name__ == "__main__":
     parameters = {
         'graph_type': ['complete'],
         'network_size':  [75],
-        'memory_size': [160],
-        'code_length': [5],
+        'memory_size': [2],
+        'code_length': [1],
         'kappa': [0, 5, 10, 15, 30],
         'lambda': [0],
         'alpha': [0],

@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from time import time
 import pickle 
 import numpy as np
+import os
 
 def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     graph_type, N, mu, code_length, kappa,\
@@ -24,7 +25,7 @@ def worker(params: Tuple[int]) -> Tuple[Tuple[int], dict]:
     elapsedTime, rep_statistics, mean_statistics = evaluateModel(model, parameters['T'], parameters['num_repetitions'])
     print(f"Finished simulation of model with parameters tuple: {params} \t - \t Execution time: {time() - start} s")
     
-    return (params, mean_statistics, elapsedTime)
+    return (params, mean_statistics, rep_statistics, elapsedTime)
         
     
 
@@ -35,12 +36,12 @@ if __name__ == "__main__":
         'memory_size': [160],
         'code_length': [5],
         'kappa': [0, 15, 30],
-        'lambda': [0, 1, 5, 15, 30],
+        'lambda': [0, 0.1, 0.3, 1, 5, 10],
         'alpha': [1, 0.8, 0.6, 0.5, 0.4, 0.2],
-        'omega': [0, 0.8, 0.6, 0.5, 0.4, 0.2],
-        'gamma': [-3, 0, 3],
+        'omega': [0, 0.2, 0.4, 0.5, 0.6, 0.8],
+        'gamma': [0],
         'seed': 42,
-        'T': 50,
+        'T': 200,
         'num_repetitions': 5,
         'path_str': Path("experiments/experiment_8/")
     }
@@ -56,15 +57,24 @@ if __name__ == "__main__":
                                        parameters['alpha'], parameters['omega'], parameters['gamma'])
     params_cartesian_product = list(params_cartesian_product)
     results_dictionary = {}
+    mean_results_dictionary = {}
+    rep_results_dictionary = {}
     
     print(f"Initializing simulations with {parameters['T']} iterations, for {parameters['num_repetitions']} repetitions.")
     
     with Pool() as pool:
         result = pool.map(worker, params_cartesian_product)
         
-    for identifier, statistics, elapsedTime in result:
-        if identifier != "None" and statistics != "None" and elapsedTime != "None":
-            results_dictionary[identifier] = (statistics, elapsedTime)
+    result = [x for x in result if x != None]
+        
+    for params, mean_statistics, rep_statistics, elapsedTime in result:
+        mean_results_dictionary[params] = mean_statistics
+        rep_results_dictionary[params]  = rep_statistics
     
-    pickle.dump(results_dictionary, open(parameters['path_str'] / "simulation_results.pickle", "wb"))       
+    pickle.dump(mean_results_dictionary, open(parameters['path_str'] / "simulation_mean_results.pickle", "wb"))  
+    pickle.dump(rep_results_dictionary, open(parameters['path_str'] / "simulation_rep_results.pickle", "wb"))    
+    
+    partial_results = [x for x in os.listdir(parameters['path_str']) if 'partial_results' in x]  
+    for pr in partial_results:
+        os.remove(parameters['path_str'] / pr)    
     
