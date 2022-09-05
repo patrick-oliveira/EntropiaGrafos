@@ -39,11 +39,14 @@ def worker(worker_input: Tuple[int, List[Tuple[Union[str, int]]]]):
             
             last_run = 0      
         else:
-            runs = os.listdir(output_path)
-            runs = [x for x in runs if "run" in x]
-            runs = [x.split("_")[1] for x in runs]
-            runs = [int(x) for x in runs]
-            last_run = max(runs)
+            try:
+                runs = os.listdir(output_path)
+                runs = [x for x in runs if "run" in x]
+                runs = [x.split("_")[1] for x in runs]
+                runs = [int(x) for x in runs]
+                last_run = max(runs)
+            except:
+                last_run = 0
             if last_run == general_params['num_repetitions']:
                 print(f"[WORKER {worker_id}] This parameter combination was already simulated for {general_params['num_repetitions']} repetitions.")
                 continue
