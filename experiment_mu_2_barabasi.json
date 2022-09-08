@@ -1,0 +1,20 @@
+{
+    "simulation_params": {
+        "graph_type": ["barabasi"],
+        "network_size": [500],
+        "memory_size": [2],
+        "code_length": [1],
+        "kappa": [0, 15, 30],
+        "lambd": [0],
+        "alpha": [0],
+        "omega": [0],
+        "gamma": [-10, 0, 10],
+        "prefferential_att": [2]
+    },
+    "general_params": {
+        "T": 500,
+        "num_repetitions": 25,
+        "seed": 42,
+        "experiment_path": "results/experiment_mu_2_barabasi/"
+    }
+}

@@ -17,14 +17,24 @@ from scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity, Mea
 
 
 class Model:
-    def __init__(self, graph_type: str, N: int,    # Graph Parameters
-                       mu: int, m: int,            # Memory Parameters
-                       kappa: float, lambd: float, # Proccess Parameters
-                       alpha: float, omega: float, # Population Parameters
-                       gamma: float,               # Information Dissemination Parameters
-                       seed: int,
-                       pa: int = None, d: int = None, p: float = None,      # Optional graph parameters
-                       initialize: bool = True):
+    def __init__(
+        self, 
+        graph_type: str, 
+        N: int,    # Graph Parameters
+        mu: int, 
+        m: int,            # Memory Parameters
+        kappa: float, 
+        lambd: float, # Proccess Parameters
+        alpha: float, 
+        omega: float, # Population Parameters
+        gamma: float,               # Information Dissemination Parameters
+        seed: int,
+        pa: int = None, 
+        d: int = None, 
+        p: float = None,      # Optional graph parameters
+        initialize: bool = True,
+        polarization_grouping_type: int = 0,
+    ):
         """
         
         The model is created by the following sequence of steps:
@@ -67,6 +77,7 @@ class Model:
         
         self.seed = seed
         
+        self.polarization_grouping_type = polarization_grouping_type
         
         self.create_graph()
         self.E = self.G.number_of_edges()
@@ -173,16 +184,23 @@ class Model:
     def group_individuals(self):
         """
         Individuals are randomly grouped accordingly to their polarization tendencies.
-        """        
-        indices = sample(list(range(self.N)), k = self.N)
-        group_a = indices[:int(self.alpha*self.N)]
-        group_b = indices[int(self.alpha*self.N): int(self.alpha*self.N) + int(self.omega*self.N)]
-        group_c = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
+        """    
+        if self.polarization_grouping_type == 0: # totally random    
+            indices = sample(list(range(self.N)), k = self.N)
+        elif self.polarization_grouping_type == 1: # most connected individuals are polarized
+            indices = list(np.argsort([self.G.degree[x] for x in range(self.N)]))
+            indices.reverse()
+        elif self.polarization_grouping_type == 2: # less connected individuals are polarized
+            indices = list(np.argsort([self.G.degree[x] for x in range(self.N)]))
+        
+        group_alpha = indices[:int(self.alpha*self.N)]
+        group_omega = indices[int(self.alpha*self.N): int(self.alpha*self.N) + int(self.omega*self.N)]
+        group_neutral = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
         
         attribute_dict = {}
-        attribute_dict.update({list(self.G.nodes())[i]:1 for i in group_a})
-        attribute_dict.update({list(self.G.nodes())[i]:-1 for i in group_b})
-        attribute_dict.update({list(self.G.nodes())[i]:0 for i in group_c})
+        attribute_dict.update({list(self.G.nodes())[i]:1 for i in group_alpha})
+        attribute_dict.update({list(self.G.nodes())[i]:-1 for i in group_omega})
+        attribute_dict.update({list(self.G.nodes())[i]:0 for i in group_neutral})
         
         nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
         self._vertex_tendencies = nx.get_node_attributes(self.G, 'Tendency')
