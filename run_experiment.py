@@ -72,6 +72,9 @@ def worker(worker_input: Tuple[int, List[Tuple[Union[str, int]]]]):
         print(f"[WORKER {worker_id}] Finished simulation. Elapsed time (s): {end - start}")
         
 
+excluded_list = [(0.2, 0.8), (0.4, 0.6)]
+
+
 if __name__ == "__main__":
     parser.add_argument(
         "-params_path", 
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     
     for k, _params in enumerate(simulation_params):
         params = {k:val for k, val in zip(simulation_params_keys, _params)}
-        if params['alpha'] + params['omega'] > 1:
+        if params['alpha'] + params['omega'] > 1 or (params['alpha'], params['omeag']) in excluded_list:
             simulation_params.pop(k)
             
     simulation_params = split_list(simulation_params, num_processes)
