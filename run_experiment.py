@@ -1,6 +1,6 @@
 from posixpath import split
 from scripts.Model import initialize_model, evaluateModel
-from scripts.utils import split_list
+from scripts.utils import split_list, modify_model
 from itertools import product
 from pathlib import Path
 from typing import Tuple, List, Union
@@ -34,6 +34,11 @@ def worker(worker_input: Tuple[int, List[Tuple[Union[str, int]]]]):
             print(f"[WORKER {worker_id}] No previous runs found. Creating new model.")
             os.makedirs(output_path)
             model = initialize_model(**params, seed = general_params['seed'])
+            
+            
+            model = modify_model(model)
+            
+            
             with open(output_path / "model.pkl", "wb") as file:
                 pickle.dump(model, file)
             

@@ -214,7 +214,7 @@ class Model:
             tendency   = self.indTendency(node)
             global_proximity = sum([self.G.edges[(node, neighbor)]['Distance'] for neighbor in self.G.neighbors(node)])
             setattr(individual, 'sigma', global_proximity)
-            setattr(individual, 'xi', 1 / (np.exp(individual.sigma * self.lambd) + 1))  
+            setattr(individual, 'xi', 1 / (np.exp(self.lambd) + 1))  
             setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency)) 
             
             

@@ -110,7 +110,9 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
         float: The acceptance probability for u of informations given by v.
     """
     
-    max_sigma = max(set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))]))
+    max_sigma = max(
+        set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))])
+    )
     
     sigma_ratio =(G.degree[v]**gamma)/max_sigma
     return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
