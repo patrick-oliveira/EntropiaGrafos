@@ -1,12 +1,15 @@
-__package__ = None
+import random
 
 import numpy as np
-from scripts.Types import Memory, Binary
-from scripts.Memory import initialize_memory, probability_distribution, random_selection
-from scripts.Entropy import memory_entropy
-from scripts.Parameters import max_H
-from scripts.Polarity import polarity
-import random
+
+from opdynamics import max_H
+from opdynamics.components.memory import (initialize_memory,
+                                          probability_distribution,
+                                          random_selection)
+from opdynamics.math.entropy import memory_entropy
+from opdynamics.math.polarity import polarity
+from opdynamics.utils.types import Binary, Memory
+
 
 class Individual:
     def __init__(self, kappa: float, memory_size: int):

@@ -1,25 +1,45 @@
+import pickle
+import time
+from copy import deepcopy
+from pathlib import Path
+from random import sample
+from typing import Union
+
 import networkx as nx
 import numpy as np
-import time
-from random import sample
-from copy import deepcopy
 
-from Scripts.Types import Dict, List, Tuple
-from Scripts.Individual import Individual
-from Scripts.ModelDynamics import acceptance_probability, get_transition_probabilities, evaluate_information, \
-                                  distort, getInfo, getTendency
-from Scripts.Entropy import JSD
-from Scripts.Parameters import pa, memory_size, code_length, seed, N
-from Scripts.Statistics import StatisticHandler, MeanEntropy, MeanProximity
+from opdynamics.components import Individual
+from opdynamics.math.entropy import S
+from opdynamics.model.dynamics import (acceptance_probability, distort,
+                                       evaluate_information,
+                                       get_transition_probabilities)
+from opdynamics.model.statistics import (InformationDistribution,
+                                         MeanAcceptances, MeanDelta,
+                                         MeanEntropy, MeanPolarity,
+                                         MeanProximity, MeanTransmissions,
+                                         StatisticHandler)
+from opdynamics.utils.types import Dict, List, Tuple
+
 
 class Model:
-    def __init__(self, N: int, pa: int,            # Graph Parameters
-                       mu: int, m: int,            # Memory Parameters
-                       kappa: float, lambd: float, # Proccess Parameters
-                       alpha: float, omega: float, # Population Parameters
-                       gamma: float,               # Information Dissemination Parameters
-                       seed: int,
-                       initialize: bool = True):
+    def __init__(
+        self, 
+        graph_type: str, 
+        N: int,    # Graph Parameters
+        mu: int, 
+        m: int,            # Memory Parameters
+        kappa: float, 
+        lambd: float, # Proccess Parameters
+        alpha: float, 
+        omega: float, # Population Parameters
+        gamma: float,               # Information Dissemination Parameters
+        seed: int,
+        pa: int = None, 
+        d: int = None, 
+        p: float = None,      # Optional graph parameters
+        initialize: bool = True,
+        polarization_grouping_type: int = 0,
+    ):
         """
         
         The model is created by the following sequence of steps:
@@ -47,6 +67,9 @@ class Model:
         # Network parameters
         self.N  = N
         self.pa = pa
+        self.d  = d
+        self.p  = p
+        self.graph_type = graph_type
         
         # Individual parameters
         self.mu    = mu
@@ -59,6 +82,7 @@ class Model:
         
         self.seed = seed
         
+        self.polarization_grouping_type = polarization_grouping_type
         
         self.create_graph()
         self.E = self.G.number_of_edges()
@@ -91,19 +115,34 @@ class Model:
     @property
     def G(self): 
         return self._G
+    
+    @property
+    def ind_vertex_objects(self):
+        return self._ind_vertex_objects
+    
+    @property
+    def vertex_tendencies(self):
+        return self._vertex_tendencies
         
-    def create_graph(self):
+    def create_graph(self, graph_type: str = 'barabasi'):
         """
         Edite esta função para permitir a criação de redes com topologias diferentes. A função deve receber um nome identificando o tipo de rede, e/ou uma função de criação da rede.
-        """        
-        self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        """ 
+        if self.graph_type == 'barabasi':
+            self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+        elif self.graph_type == 'complete':
+            self._G = nx.complete_graph(self.N)
+        elif self.graph_type == 'regular':
+            self._G = nx.random_regular_graph(n = self.N, d = self.d, seed = self.seed)
+        elif self.graph_type == 'erdos':
+            self._G = nx.erdos_renyi_graph(n = self.N, p = self.p, seed = self.seed)
         
     def compute_model_measures(self):
         self.compute_edge_weights()
         self.compute_sigma_attribute()
         self.compute_graph_entropy()
         self.compute_mean_edge_weight()
-        # self.compute_graph_polarity()
+        self.compute_graph_polarity()
         
     def initialize_model_info(self):
         """
@@ -111,10 +150,6 @@ class Model:
         """        
         self.initialize_nodes()
         self.group_individuals()
-        
-        for node in self.G:
-            self.update_node_info(node)
-            
         self.compute_model_measures()
         
     def update_model(self):
@@ -137,57 +172,64 @@ class Model:
             update_memory (bool, optional): A boolean which specifies if the individual's memory must be updated or not. Defaults to False.
         """        
         individual = self.indInfo(node)
-        tendency   = self.indTendency(node)
         
         if update_memory:
             individual.update_memory()
-            
-        # compute polarity probability
-        # mean_polarity_neighbours = np.mean([self.indInfo(neighbor).pi for neighbor in self.G.neighbors(node)])
-        # setattr(self.indInfo(node), 'xi', self.lambd*abs(individual.pi - mean_polarity_neighbours))    
-        # Updates the information distortion probabilities based on entropic effects and polarzation bias
-        setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency))   
         
     def initialize_nodes(self):
         """
         Attribute to each node in the network a new instance of 'Individual'.
         """
         nx.set_node_attributes(self.G, 
-                               {node : Individual(self.kappa) \
+                               {node : Individual(self.kappa, self.mu) \
                                                     for node in self.G}, 
                                name = 'Object')
+        self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
             
     def group_individuals(self):
         """
         Individuals are randomly grouped accordingly to their polarization tendencies.
-        """        
-        indices = sample(list(range(self.N)), k = self.N)
-        group_a = indices[:int(self.alpha*self.N)]
-        group_b = indices[int(self.alpha*self.N): int(self.alpha*self.N) + int(self.omega*self.N)]
-        group_c = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
+        """    
+        if self.polarization_grouping_type == 0: # totally random    
+            indices = sample(list(range(self.N)), k = self.N)
+        elif self.polarization_grouping_type == 1: # most connected individuals are polarized
+            indices = list(np.argsort([self.G.degree[x] for x in range(self.N)]))
+            indices.reverse()
+        elif self.polarization_grouping_type == 2: # less connected individuals are polarized
+            indices = list(np.argsort([self.G.degree[x] for x in range(self.N)]))
+        
+        group_alpha = indices[:int(self.alpha*self.N)]
+        group_omega = indices[int(self.alpha*self.N): int(self.alpha*self.N) + int(self.omega*self.N)]
+        group_neutral = indices[int(self.alpha*self.N) + int(self.omega*self.N):]
         
         attribute_dict = {}
-        attribute_dict.update({list(self.G.nodes())[i]:'Up' for i in group_a})
-        attribute_dict.update({list(self.G.nodes())[i]:'Down' for i in group_b})
-        attribute_dict.update({list(self.G.nodes())[i]:'-' for i in group_c})
+        attribute_dict.update({list(self.G.nodes())[i]:1 for i in group_alpha})
+        attribute_dict.update({list(self.G.nodes())[i]:-1 for i in group_omega})
+        attribute_dict.update({list(self.G.nodes())[i]:0 for i in group_neutral})
         
         nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
+        self._vertex_tendencies = nx.get_node_attributes(self.G, 'Tendency')
         
     def compute_sigma_attribute(self):
         """
         Uses the edge weights to measure popularity of each node.
         """        
         for node in self.G:
+            individual = self.indInfo(node)
+            tendency   = self.indTendency(node)
             global_proximity = sum([self.G.edges[(node, neighbor)]['Distance'] for neighbor in self.G.neighbors(node)])
-            setattr(self.indInfo(node), 'sigma', global_proximity)
+            setattr(individual, 'sigma', global_proximity)
+            setattr(individual, 'xi', 1 / (np.exp(self.lambd) + 1))  
+            setattr(individual, 'DistortionProbability', get_transition_probabilities(individual, tendency)) 
+            
             
     def compute_edge_weights(self):
         """
         Used the Jensen-Shannon Divergence to attribute edge weights, measuring ideological proximity.
         """        
         nx.set_edge_attributes(self.G, 
-                               {(u, v):(1 - JSD(self.indInfo(u).P, self.indInfo(v).P)) \
-                                                                    for u, v in self.G.edges}, 
+                               {(u, v):(S(self.indInfo(u).P, self.indInfo(v).P)) \
+                                                                for u, v in self.G.edges}, 
                                'Distance')
             
     def get_acceptance_probability(self, u: int, v:int) -> float:
@@ -213,7 +255,7 @@ class Model:
         Returns:
             Individual: An instance of "Individual".
         """        
-        return getInfo(self.G, node)
+        return self.ind_vertex_objects[node]
     
     def indTendency(self, node: int) -> str:
         """
@@ -225,7 +267,7 @@ class Model:
         Returns:
             str: A string defining the polarization tendency of the node (Up, Down or None)
         """        
-        return getTendency(self.G, node) 
+        return self.vertex_tendencies[node]
         
     def compute_graph_entropy(self) -> None:
         """
@@ -248,59 +290,116 @@ class Model:
         Computes the mean polarity of the network's individuals.
         """        
         self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
+        
+def initialize_model(
+    graph_type: str, 
+    network_size: int,
+    memory_size: int, 
+    code_length: int,
+    kappa: float, 
+    lambd: float,
+    alpha: float, 
+    omega: float,
+    gamma: float,
+    seed: int,
+    prefferential_att: float = None, 
+    degree: int = None, 
+    edge_prob: float = None, 
+    verbose: bool = False,
+    worker_id: int = None,
+    *args,
+    **kwargs,
+) -> Model:
+    worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
+    if verbose:
+        print(worker_id + "Initializing model.")
     
+    start = time.time()
+    initial_model = Model(
+        graph_type = graph_type, 
+        N = network_size, 
+        mu = memory_size, 
+        m = code_length, 
+        kappa = kappa, 
+        lambd = lambd, 
+        alpha = alpha, 
+        omega = omega, 
+        gamma = gamma, 
+        seed = seed,
+        pa = prefferential_att, 
+        d = degree, 
+        p = edge_prob
+    )
+    model_initialization_time = time.time() - start
+    
+    if verbose:
+        print(worker_id + f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} min")
+    
+    return initial_model
 
-def evaluateModel(T: int,
-                  kappa: float, lambd: float,
-                  alpha: float, omega: float,
-                  gamma: float,
-                  num_repetitions: int = 1) -> Tuple[float, List[Dict], Dict]:
+def Parallel_evaluateModel(
+    initial_model: Model,
+    T: int, 
+    num_repetitions: int, 
+    verbose: bool = False
+) -> Tuple[float, List[Dict], Dict]:
+    pass
+
+def evaluateModel(
+    initial_model: Model,
+    T: int, 
+    num_repetitions: int = 1, 
+    last_run: int = 0, 
+    verbose: bool = False,
+    save_runs: bool = False, 
+    save_path: Union[Path, str] = None,
+    worker_id: int = None,
+) -> Tuple[float, StatisticHandler]:
     """
     Evaluate a new model over T iterations.
-
-    Args:
-        T (int): Number of iterations to simulate the model.
-        kappa (float): Conservation factor.
-        lambd (float): Polarization factor.
-        alpha (float): Proportion of individuals polarizing upwards.
-        omega (float): Proportion of individuals polarizing downwards.
-        gamma (float): Confidence coefficient.
-        seed (int, optional): Seed for random number generator.. Defaults to 42.
-
-    Returns:
-        Dict: A dictionary of statistics extracted from the model after each iteration.
-    """    
-    print("Model evaluation started.")
-    print(f"Number of repetitions = {num_repetitions}")
-    print("Initializing model with parameters")
-    print("N = {} - pa = {} \nmu = {} - m = {} \nkappa = {} - lambda = {} \nalpha = {} - omega = {} \ngamma = {}".format(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma))
-    start = time.time()
-    initial_model = Model(N, pa, memory_size, code_length, kappa, lambd, alpha, omega, gamma, seed)
-    model_initialization_time = time.time() - start
-    print(f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} minutes")
-    
-    print("\nStarting simulations.\n")
+    """
+    worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
+    if verbose:
+        print(worker_id + "Model evaluation started.")
+        print(worker_id + f"Number of repetitions = {num_repetitions}")
+        
     simulation_time = []
     statistic_handler = StatisticHandler()
-    statistic_handler.new_statistic('Entropy', MeanEntropy())
+    statistic_handler.new_statistic('Entropy',   MeanEntropy())
     statistic_handler.new_statistic('Proximity', MeanProximity())
-    for repetition in range(1, num_repetitions + 1):
-        print(f"Repetition {repetition}/{num_repetitions}")
+    statistic_handler.new_statistic('Polarity',  MeanPolarity())
+    statistic_handler.new_statistic('Distribution', InformationDistribution())
+    statistic_handler.new_statistic('Acceptance', MeanAcceptances())
+    statistic_handler.new_statistic('Transmission', MeanTransmissions())
+    
+    
+    for repetition in range(last_run + 1, num_repetitions + 1):
+        if verbose:
+            print(worker_id + f"Repetition {repetition}/{num_repetitions}")
+        
         model = deepcopy(initial_model)
+        
         start = time.time()
         for i in range(T):
             simulate(model)
             statistic_handler.update_statistics(model)
         repetition_time = time.time() - start
         simulation_time.append(repetition_time)
-        print(f"\tFinished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+        
+        if verbose:
+            print(worker_id + f"Finished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+        
         statistic_handler.end_repetition()
         
-    elapsedTime = sum(simulation_time) + model_initialization_time        
-    print(f"\nSimulation ended. Total elapsed time = {np.round(elapsedTime/60, 2)} minutes")        
-    mean_statistics = statistic_handler.get_rep_mean()
-    rep_statistics  = statistic_handler.get_statistics(rep_stats = True)
-    return elapsedTime, rep_statistics, mean_statistics
+        if save_runs:
+            with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
+                pickle.dump(statistic_handler.repetitions[-1], file)
+                
+        # compute error curve
+        
+    elapsedTime = sum(simulation_time)
+    
+    return elapsedTime, statistic_handler
 
 def simulate(M: Model):
     """
@@ -316,7 +415,13 @@ def simulate(M: Model):
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
-        u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
-        v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        received = u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
+        if received:
+            v_ind.transmitted()
+            u_ind.received()
+        received = v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        if received:
+            u_ind.transmitted()
+            v_ind.received()
     
     M.update_model()

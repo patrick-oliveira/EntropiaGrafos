@@ -1,6 +1,8 @@
 import numpy as np
-from scripts.Types import Weights, Binary
-from scripts.Parameters import code_length, seed
+
+from opdynamics import code_length, seed
+from opdynamics.utils.types import Binary, Weights
+
 
 def polarity_weights() -> Weights:
     """

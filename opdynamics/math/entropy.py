@@ -1,8 +1,10 @@
-import numpy as np
-from scripts.Types import CodeDistribution, Binary, Memory
-from scripts.Parameters import code_length
-from scripts.Memory import binary_to_string
 from functools import partial
+
+import numpy as np
+
+from opdynamics import code_length
+from opdynamics.components.memory import binary_to_string
+from opdynamics.utils.types import Binary, CodeDistribution
 
 
 def shannon_entropy(P: float) -> float:

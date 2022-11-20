@@ -1,24 +1,25 @@
+from functools import reduce
+from typing import List, Tuple
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import matplotlib
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 
-from typing import Tuple, List, NewType
-from functools import reduce
+from opdynamics.utils.types import Axis, Figure, l_multiply
 
-Figure = NewType('Figure', matplotlib.figure.Figure)
-Axis   = NewType('Figure', matplotlib.axes.Axes)
-l_multiply = lambda x, y: x * y
-l_sum      = lambda x, y: x + y
 
-def stacked_frames(num_rows: int, num_cols: int, size: Tuple[int],
-                   names_left: List[str] = None,
-                   names_right: List[str] = None,
-                   x_axis_name: str = None,
-                   title: str = None,
-                   names_size: int = 15,
-                   title_size: int = 20)         -> Tuple[Figure, Axis]:
+def stacked_frames(
+    num_rows: int, 
+    num_cols: int, 
+    size: Tuple[int],
+    names_left: List[str] = None,
+    names_right: List[str] = None,
+    x_axis_name: str = None,
+    title: str = None,
+    names_size: int = 15,
+    title_size: int = 20
+)   -> Tuple[Figure, Axis]:
     fig, axs = plt.subplots(nrows = num_rows, ncols = num_cols)
     fig.set_size_inches(size)
     fig.subplots_adjust(hspace = 0.01)
@@ -56,15 +57,19 @@ def stacked_frames(num_rows: int, num_cols: int, size: Tuple[int],
         
     return fig, axs
 
-def grid_frames(num_rows: int, num_cols: int, size: Tuple[int] = None,
-                spacing: Tuple[float] = None,
-                remove_all_axis: bool = False,
-                x_names: List[str] = None,
-                y_names: List[str] = None,
-                axs_titles: List[str] = None,
-                title: str = None,
-                names_size: int = 12,
-                title_size: int = 18) -> Tuple[Figure, Axis]:
+def grid_frames(
+    num_rows: int, 
+    num_cols: int, 
+    size: Tuple[int] = None,
+    spacing: Tuple[float] = None,
+    remove_all_axis: bool = False,
+    x_names: List[str] = None,
+    y_names: List[str] = None,
+    axs_titles: List[str] = None,
+    title: str = None,
+    names_size: int = 12,
+    title_size: int = 18
+) -> Tuple[Figure, Axis]:
     fig, axs = plt.subplots(nrows = num_rows, ncols = num_cols)
     if size == None: 
         fig.set_size_inches(3*num_cols, 2.5*num_rows)
@@ -111,10 +116,13 @@ def grid_frames(num_rows: int, num_cols: int, size: Tuple[int] = None,
     
     return fig, axs
 
-def heat_plot(X: np.array, size: Tuple[int] = None,
-              x_tick_labels: List[str] = None,
-              y_tick_labels: List[str] = None,
-              cmap: str = None):
+def heat_plot(
+    X: np.array, 
+    size: Tuple[int] = None,
+    x_tick_labels: List[str] = None,
+    y_tick_labels: List[str] = None,
+    cmap: str = None
+) -> Tuple[Figure, Axis]:
     fig, ax = plt.subplots(1, 1)
     
     if size != None:
@@ -134,9 +142,17 @@ def heat_plot(X: np.array, size: Tuple[int] = None,
     
     return fig, ax
 
-def simplePlot(size: Tuple[int, int], x_label: str, y_label: str, title: str,
-               x_label_size: int, y_label_size: int, title_size: int,
-               x_tick_label_size: int, y_tick_label_size: int) -> Tuple[Figure, Axis]:
+def simplePlot(
+    size: Tuple[int, int], 
+    x_label: str,
+    y_label: str, 
+    title: str,
+    x_label_size: int, 
+    y_label_size: int, 
+    title_size: int,
+    x_tick_label_size: int, 
+    y_tick_label_size: int
+) -> Tuple[Figure, Axis]:
     fig, ax = plt.subplots(1, 1)
     fig.set_size_inches(size)
     

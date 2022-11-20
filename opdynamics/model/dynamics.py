@@ -1,10 +1,11 @@
 import numpy as np
-from Scripts.Types import Graph, TransitionProbabilities, Binary
-from Scripts.Individual import Individual
-from Scripts.Entropy import JSD
-from Scripts.Parameters import code_length
 
-np.random.seed(50)
+from opdynamics import seed
+from opdynamics.components import Individual
+from opdynamics.math.entropy import JSD
+from opdynamics.utils.types import Binary, Graph, TransitionProbabilities
+
+np.random.seed(seed)
     
 def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
     """
@@ -30,33 +31,9 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
     Returns:
         TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
     """    
-    return {0: ind.delta, 1: ind.delta} if tendency == 1 else \
-           {0: ind.delta, 1: ind.delta} if tendency == -1 else \
+    return {0: ind.delta + ind.xi, 1: ind.delta} if tendency == 1 else \
+           {0: ind.delta, 1: ind.delta + ind.xi} if tendency == -1 else \
            {0: ind.delta, 1: ind.delta}
-          
-# def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
-#     """
-#     Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
-
-#     Args:
-#         code (Binary): A binary code.
-#         transition_probability (TransitionProbabilities): The probabilitions for the transitions 0 -> 1 and 1 -> 0.
-
-#     Returns:
-#         Binary: A possibily bitwise distorted code.
-#     """    
-#     # get the mutation probability for each bit of "code"
-#     transition_probabilities = transition_probability(code)
-#     # get a vector of random numbers with same size as "code"
-#     random_numbers = np.random.uniform(size = code_length)
-#     # get a vector identifying which bits will be mutated
-#     mutate = (random_numbers <= transition_probabilities).astype(int)
-#     # get the arguments for all bits which will be mutated
-#     # mutate = np.argwhere(mutate).reshape(-1)
-#     # mutate all selected bits (inverting its values)
-#     code[mutate] = np.logical_not(code[mutate]).astype(int)
-    
-#     return code
 
 def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
     """
@@ -111,7 +88,12 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
         float: The acceptance probability for u of informations given by v.
     """
     
-    max_sigma = max(set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))]))
+    max_sigma = max(
+        set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))])
+    )
     
     sigma_ratio =(G.degree[v]**gamma)/max_sigma
-    return 2/( 1/G[u][v]['Distance'] + 1/sigma_ratio )
+    return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
+
+
+e = 1e-10

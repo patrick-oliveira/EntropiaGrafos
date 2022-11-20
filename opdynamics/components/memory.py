@@ -1,10 +1,13 @@
-import numpy as np
-from Scripts.Types import Memory, Binary, CodeDistribution
-from Scripts.Parameters import code_length, memory_size
-from Scripts.Polarity import polarity
 from copy import deepcopy
 
-def initialize_memory() -> Memory:
+import numpy as np
+
+from opdynamics import code_length
+from opdynamics.math.polarity import polarity
+from opdynamics.utils.types import Binary, CodeDistribution, Memory
+
+
+def initialize_memory(memory_size: int) -> Memory:
     """
     Create a list of size "mu" of random binary codes of an specified, fixed length, taken from a binomial distribution.
     The parameters are defined by the model.
@@ -94,7 +97,7 @@ def string_to_binary(x: str) -> Binary:
 def binary_to_string(x: Binary) -> str:
     return ''.join(list(x.astype(str)))
 
-def probability_distribution(memory: Memory) -> CodeDistribution:
+def probability_distribution(memory: Memory, memory_size: int) -> CodeDistribution:
     """
     Return a probability distribution defined over a list of binary codes.
 
