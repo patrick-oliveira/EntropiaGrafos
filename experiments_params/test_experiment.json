@@ -1,20 +1,22 @@
 {
     "simulation_params": {
-        "graph_type": ["complete"],
+        "graph_type": ["barabasi"],
         "network_size": [100],
-        "memory_size": [32],
+        "memory_size": [8],
         "code_length": [2],
         "kappa": [0, 15, 30],
         "lambd": [0],
         "alpha": [0],
         "omega": [0],
-        "gamma": [-10, -3, 0, 3, 10],
-        "preferential_att": [2]
+        "gamma": [-1, 0, 1],
+        "preferential_attachment": [2],
+        "polarization_type": [0]
     },
     "general_params": {
-        "T": 10,
-        "num_repetitions": 10,
-        "seed": 42,
-        "experiment_path": "results/test_experiment/"
+        "T": 100,
+        "num_repetitions": 500,
+        "early_stop": true,
+        "epsilon": 0.00001,
+        "results_path": "results/test_experiment/"
     }
 }

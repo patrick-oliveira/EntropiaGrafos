@@ -7,11 +7,12 @@ from typing import List, Tuple
 
 import numpy as np
 
+from opdynamics.utils.tools import param_to_hash
 from opdynamics.utils.types import Dict, Parameters
 
 
 def get_runs(path: str):
-    return [x for x in os.listdir(path) if "run" in x]
+    return [x for x in os.listdir(path) if "run" in x and "last" not in x]
 
 def get_mean_stats(param_list: Dict, results_path: str, T: int) -> Dict:
     mean_stats = {}
@@ -50,7 +51,6 @@ def get_mean_stats(param_list: Dict, results_path: str, T: int) -> Dict:
 
 def error_curve(
     results_path: str,
-    params: Tuple,
     T: int,
 ) -> Dict[str, List[float]]:
     entropy_abs_dif   = []
@@ -72,13 +72,16 @@ def error_curve(
     proximity_sum = np.zeros(T)
     polarity_sum  = np.zeros(T)
     
-    input_path = Path(results_path) / str(params)
-    runs = get_runs(input_path)
+    runs = get_runs(results_path)
     
     for k, run in enumerate(runs):
         n = k + 1
         
-        stats = pickle.load(open(input_path / run, "rb"))
+        try:
+            stats = pickle.load(open(results_path / run, "rb"))
+        except Exception as e:
+            print(f'Error loadind stats: {results_path / run}')
+            raise e
         
         entropy   = stats['Entropy']
         proximity = stats['Proximity']
@@ -94,14 +97,14 @@ def error_curve(
         mean_polarity_f  = polarity_sum / n
         
         
-        entropy_abs_mean_difference   = np.abs((mean_entropy_f - mean_entropy_i).sum())
-        proximity_abs_mean_difference = np.abs((mean_proximity_f - mean_proximity_i).sum())
-        polarity_abs_mean_difference  = np.abs((mean_polarity_f - mean_polarity_i).sum())
-        
-        print("Mean Absolute Difference between runs {} and {}".format(n, n - 1))
-        print("{0: <34}: {:0.10f}".format("Entropy Mean Absolute Difference", entropy_abs_mean_difference))
-        print("{0: <34}: {:0.10f}".format("Proximity Mean Absolute Difference", proximity_abs_mean_difference))
-        print("{0: <34}: {:0.10f}".format("Polarity Mean Absolute Difference", polarity_abs_mean_difference))
+        entropy_abs_mean_difference   = ((mean_entropy_f - mean_entropy_i)**2).mean()
+        proximity_abs_mean_difference = ((mean_proximity_f - mean_proximity_i)**2).mean()
+        polarity_abs_mean_difference  = ((mean_polarity_f - mean_polarity_i)**2).mean()  
+              
+        # print("Mean Absolute Difference between runs {} and {}".format(n, n - 1))
+        # print("{0: <34}: {:0.10f}".format("Entropy Mean Absolute Difference", entropy_abs_mean_difference))
+        # print("{0: <34}: {:0.10f}".format("Proximity Mean Absolute Difference", proximity_abs_mean_difference))
+        # print("{0: <34}: {:0.10f}".format("Polarity Mean Absolute Difference", polarity_abs_mean_difference))
         
         entropy_abs_dif.append(entropy_abs_mean_difference)
         proximity_abs_dif.append(proximity_abs_mean_difference)

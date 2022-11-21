@@ -10,7 +10,6 @@ import numpy as np
 from opdynamics.model import Model, stats_dict
 from opdynamics.model.dynamics import distort, evaluate_information
 from opdynamics.model.statistics import StatisticHandler, error_curve
-from opdynamics.simulation.experimentation import run_count
 
 
 def initialize_model(
@@ -23,7 +22,7 @@ def initialize_model(
     alpha: float, 
     omega: float,
     gamma: float,
-    prefferential_attachment: float = None,
+    preferential_attachment: float = None,
     polarization_grouping_type: int = 0, 
     degree: int = None, 
     edge_prob: float = None, 
@@ -47,7 +46,7 @@ def initialize_model(
         alpha = alpha, 
         omega = omega, 
         gamma = gamma, 
-        prefferential_attachment = prefferential_attachment,
+        preferential_attachment = preferential_attachment,
         polarization_grouping_type = polarization_grouping_type, 
         d = degree, 
         p = edge_prob
@@ -128,7 +127,7 @@ def evaluate_model(
         simulation_time.append(repetition_time)
         
         if verbose:
-            print(worker_id + f"Finished repetition {repetition}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+            print(worker_id + f"Finished repetition {repetition + 1}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
         
         statistic_handler.end_repetition()
         
@@ -137,7 +136,7 @@ def evaluate_model(
                 pickle.dump(statistic_handler.repetitions[-1], file)
                 
         if early_stop:
-            errors = error_curve(save_path)
+            errors = error_curve(save_path, T)
             errors = {
                 "entropy": errors["entropy"][-1],
                 "proximity": errors["proximity"][-1],
@@ -151,8 +150,7 @@ def evaluate_model(
                 errors["proximity"] <= epsilon and \
                     errors["polarity"] <= epsilon:
                         print(worker_id + f"Difference between current and last runs is below the {epsilon} threshold. Stopping simulation.")
-                        run_count(-2, save_path)
-                        return
+                        break
                     
         run_count(current_run, save_path)
        
@@ -185,3 +183,8 @@ def simulate(M: Model):
             v_ind.received()
     
     M.update_model()
+    
+def run_count(run: int, path: Path):
+    f = open(path / "last_run.txt", "w")
+    f.write(str(run))
+    f.close()

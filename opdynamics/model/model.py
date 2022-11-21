@@ -14,18 +14,18 @@ class Model:
     def __init__(
         self, 
         graph_type: str, 
-        network_size: int,    # Graph Parameters
+        network_size: int,
         memory_size: int, 
-        code_length: int,            # Memory Parameters
-        kappa: float, 
-        lambd: float, # Proccess Parameters
+        code_length: int,
+        kappa: float,
+        lambd: float,
         alpha: float, 
-        omega: float, # Population Parameters
-        gamma: float,               # Information Dissemination Parameters
-        prefferential_attachment: int = None, 
+        omega: float,
+        gamma: float,
+        preferential_attachment: int, 
         polarization_grouping_type: int = 0,
         d: int = None, 
-        p: float = None,      # Optional graph parameters
+        p: float = None,
         initialize: bool = True,
         *args,
         **kwargs
@@ -53,10 +53,10 @@ class Model:
             lambd (float): Polarization coefficient.
             alpha (float): Proportion of individuals who polarize upwards.
             omega (float): Proportion of individuals who polarize downwards.
-        """        
+        """
         # Network parameters
         self.N  = network_size
-        self.pa = prefferential_attachment
+        self.pa = preferential_attachment
         self.d  = d
         self.p  = p
         self.graph_type = graph_type

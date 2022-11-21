@@ -1,3 +1,4 @@
+import hashlib
 from itertools import islice
 from typing import Dict, List
 
@@ -9,7 +10,8 @@ from opdynamics.utils.types import Parameters
 
 def param_to_hash(params: Parameters) -> str:
     param_tuple = tuple(params.values())
-    return str(hash(param_tuple))
+    string = str(param_tuple).encode("utf-8")
+    return str(hashlib.sha256(string).hexdigest())
 
 def split_list(input_list: List, number_of_slices: int) -> List[List]:
     '''
