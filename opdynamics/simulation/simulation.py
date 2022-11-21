@@ -2,16 +2,15 @@ import pickle
 import time
 from copy import deepcopy
 from pathlib import Path
+from pprint import pprint
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
-from opdynamics.model import Model
+from opdynamics.model import Model, stats_dict
 from opdynamics.model.dynamics import distort, evaluate_information
-from opdynamics.model.statistics import (InformationDistribution,
-                                         MeanAcceptances, MeanEntropy,
-                                         MeanPolarity, MeanProximity,
-                                         MeanTransmissions, StatisticHandler)
+from opdynamics.model.statistics import StatisticHandler, error_curve
+from opdynamics.simulation.experimentation import run_count
 
 
 def initialize_model(
@@ -24,8 +23,8 @@ def initialize_model(
     alpha: float, 
     omega: float,
     gamma: float,
-    seed: int,
-    prefferential_att: float = None, 
+    prefferential_attachment: float = None,
+    polarization_grouping_type: int = 0, 
     degree: int = None, 
     edge_prob: float = None, 
     verbose: bool = False,
@@ -40,16 +39,16 @@ def initialize_model(
     start = time.time()
     initial_model = Model(
         graph_type = graph_type, 
-        N = network_size, 
-        mu = memory_size, 
-        m = code_length, 
+        network_size = network_size, 
+        memory_size = memory_size, 
+        code_length = code_length, 
         kappa = kappa, 
         lambd = lambd, 
         alpha = alpha, 
         omega = omega, 
         gamma = gamma, 
-        seed = seed,
-        pa = prefferential_att, 
+        prefferential_attachment = prefferential_attachment,
+        polarization_grouping_type = polarization_grouping_type, 
         d = degree, 
         p = edge_prob
     )
@@ -60,6 +59,27 @@ def initialize_model(
     
     return initial_model
 
+def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
+    statistic_handler = StatisticHandler()
+    
+    if s_names is None:
+        s_names = [
+            "Entropy",
+            "Proximity",
+            "Polarity",
+            "Distribution",
+            "Acceptance",
+            "Transmission"
+        ]
+    
+    for name in s_names:
+        try:
+            statistic_handler.new_statistic(name, stats_dict[name]())
+        except:
+            print(f"Error building statistic: {name}")
+        
+    return statistic_handler
+
 def Parallel_evaluateModel(
     initial_model: Model,
     T: int, 
@@ -68,16 +88,19 @@ def Parallel_evaluateModel(
 ) -> Tuple[float, List[Dict], Dict]:
     pass
 
-
-def evaluateModel(
+def evaluate_model(
     initial_model: Model,
     T: int, 
-    num_repetitions: int = 1, 
-    last_run: int = 0, 
+    num_repetitions: int = 1,
+    early_stop: bool = False,
+    epsilon: float = 1e-5,
+    last_run: int = -1, 
     verbose: bool = False,
     save_runs: bool = False, 
     save_path: Union[Path, str] = None,
     worker_id: int = None,
+    *args,
+    **kwargs
 ) -> Tuple[float, StatisticHandler]:
     """
     Evaluate a new model over T iterations.
@@ -88,23 +111,17 @@ def evaluateModel(
         print(worker_id + f"Number of repetitions = {num_repetitions}")
         
     simulation_time = []
-    statistic_handler = StatisticHandler()
-    statistic_handler.new_statistic('Entropy',   MeanEntropy())
-    statistic_handler.new_statistic('Proximity', MeanProximity())
-    statistic_handler.new_statistic('Polarity',  MeanPolarity())
-    statistic_handler.new_statistic('Distribution', InformationDistribution())
-    statistic_handler.new_statistic('Acceptance', MeanAcceptances())
-    statistic_handler.new_statistic('Transmission', MeanTransmissions())
+    statistic_handler = init_statistic_handler()
     
-    
-    for repetition in range(last_run + 1, num_repetitions + 1):
+    current_run = last_run + 1
+    for repetition in range(current_run, num_repetitions):
         if verbose:
             print(worker_id + f"Repetition {repetition}/{num_repetitions}")
         
         model = deepcopy(initial_model)
         
         start = time.time()
-        for i in range(T):
+        for _ in range(T):
             simulate(model)
             statistic_handler.update_statistics(model)
         repetition_time = time.time() - start
@@ -119,12 +136,31 @@ def evaluateModel(
             with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
                 pickle.dump(statistic_handler.repetitions[-1], file)
                 
-        # compute error curve
-        
+        if early_stop:
+            errors = error_curve(save_path)
+            errors = {
+                "entropy": errors["entropy"][-1],
+                "proximity": errors["proximity"][-1],
+                "polarity": errors["polarity"][-1]
+            }
+            
+            print(worker_id + f"Last errors:")
+            pprint(errors)
+            
+            if errors["entropy"] <= epsilon and \
+                errors["proximity"] <= epsilon and \
+                    errors["polarity"] <= epsilon:
+                        print(worker_id + f"Difference between current and last runs is below the {epsilon} threshold. Stopping simulation.")
+                        run_count(-2, save_path)
+                        return
+                    
+        run_count(current_run, save_path)
+       
     elapsedTime = sum(simulation_time)
-    
-    return elapsedTime, statistic_handler
+    run_count(-2, save_path)
 
+    return elapsedTime, statistic_handler
+       
 def simulate(M: Model):
     """
     Execute one iteration of the information propagation model, updating the model's parameters at the end. 

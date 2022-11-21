@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import networkx as nx
+
 from opdynamics.components import Individual
 from opdynamics.model import Model
 from opdynamics.utils.tools import (build_degree_distribution,

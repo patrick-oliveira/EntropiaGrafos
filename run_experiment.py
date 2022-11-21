@@ -1,76 +1,58 @@
-from posixpath import split
-from scripts.Model import initialize_model, evaluateModel
-from scripts.utils import split_list, modify_model
-from itertools import product
-from pathlib import Path
-from typing import Tuple, List, Union
-from multiprocessing import Pool
-from time import time
-
-import pickle
-import numpy as np
-import os
 import argparse
 import json
 import multiprocessing as mp
+import os
+import pickle
+from itertools import product
+from pathlib import Path
+from time import time
+from typing import List, Tuple
 
-parser = argparse.ArgumentParser()
+import numpy as np
 
-def worker(worker_input: Tuple[int, List[Tuple[Union[str, int]]]]):
+from opdynamics.model import Model
+from opdynamics.simulation import evaluate_model
+from opdynamics.simulation.experimentation import (load_experiment,
+                                                   make_new_experiment)
+from opdynamics.utils.tools import param_to_hash, split_list
+from opdynamics.utils.types import Parameters
+
+parser = argparse.ArgumentParser()    
+
+def worker(worker_input: Tuple[int, List[Parameters]]):
     worker_id  = worker_input[0]
     param_list = worker_input[1]
-    
     num_params = len(param_list)
     print(f"[WORKER {worker_id}] Starting processes. Number of parameters combinations to simulate: {num_params}")
     
-    for k, _params in enumerate(param_list):
+    for k, params in enumerate(param_list):
         print(f"[WORKER {worker_id}] Param set {k + 1} out of {num_params}")
-        params = {k:val for k, val in zip(simulation_params_keys, _params)}
-
-        output_path = Path(general_params['experiment_path']) / str(_params)
+        output_path = Path(params["results_path"]) / param_to_hash(params)
         
         new_experiment = not output_path.exists()
         if new_experiment:
-            print(f"[WORKER {worker_id}] No previous runs found. Creating new model.")
-            os.makedirs(output_path)
-            model = initialize_model(**params, seed = general_params['seed'])
-            
-            
-            model = modify_model(model)
-            
-            
-            with open(output_path / "model.pkl", "wb") as file:
-                pickle.dump(model, file)
-            
-            last_run = 0      
+            print(f"[WORKER {worker_id}] No previous runs found. Creating new model.")  
+            model = make_new_experiment(params, output_path)
         else:
-            try:
-                runs = os.listdir(output_path)
-                runs = [x for x in runs if "run" in x]
-                runs = [x.split("_")[1] for x in runs]
-                runs = [int(x) for x in runs]
-                last_run = max(runs)
-            except:
-                last_run = 0
-            if last_run == general_params['num_repetitions']:
-                print(f"[WORKER {worker_id}] This parameter combination was already simulated for {general_params['num_repetitions']} repetitions.")
-                continue
+            model, last_run = load_experiment(output_path)
             
-            print(f"[WORKER {worker_id}] Loading existing model. Last run: {last_run}.")
-            model = pickle.load(open(output_path / "model.pkl", "rb"))
+            if last_run == -2:
+                print(f"[WORKER {worker_id}] This parameter combination has already been simulated up to {params['num_repetitions']} or up to an acceptable error threshold.")
+                continue
+            else:
+                print(f"[WORKER {worker_id}] Loaded existing model. Last run: {last_run}.")
             
         print(f"[WORKER {worker_id}] Starting simulation.")
         start = time()
         
-        elapsed_time, statistic_handler = evaluateModel(
+        elapsed_time, statistic_handler = evaluate_model(
             model, 
-            T = general_params['T'], 
-            num_repetitions = general_params['num_repetitions'], 
             last_run = last_run, 
             verbose = True, 
             save_runs = True, 
             save_path = output_path,
             worker_id = worker_id,
+            **params, 
         )
         
         end = time()

@@ -4,7 +4,12 @@ from typing import Dict, List
 import numpy as np
 
 from opdynamics.model import Model
+from opdynamics.utils.types import Parameters
 
+
+def param_to_hash(params: Parameters) -> str:
+    param_tuple = tuple(params.values())
+    return str(hash(param_tuple))
 
 def split_list(input_list: List, number_of_slices: int) -> List[List]:
     '''

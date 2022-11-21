@@ -1,44 +1,34 @@
-import pickle
-import time
-from copy import deepcopy
-from pathlib import Path
 from random import sample
-from typing import Union
 
 import networkx as nx
 import numpy as np
 
+from opdynamics import seed
 from opdynamics.components import Individual
 from opdynamics.math.entropy import S
-from opdynamics.model.dynamics import (acceptance_probability, distort,
-                                       evaluate_information,
+from opdynamics.model.dynamics import (acceptance_probability,
                                        get_transition_probabilities)
-from opdynamics.model.statistics import (InformationDistribution,
-                                         MeanAcceptances, MeanDelta,
-                                         MeanEntropy, MeanPolarity,
-                                         MeanProximity, MeanTransmissions,
-                                         StatisticHandler)
-from opdynamics.utils.types import Dict, List, Tuple
 
 
 class Model:
     def __init__(
         self, 
         graph_type: str, 
-        N: int,    # Graph Parameters
-        mu: int, 
-        m: int,            # Memory Parameters
+        network_size: int,    # Graph Parameters
+        memory_size: int, 
+        code_length: int,            # Memory Parameters
         kappa: float, 
         lambd: float, # Proccess Parameters
         alpha: float, 
         omega: float, # Population Parameters
         gamma: float,               # Information Dissemination Parameters
-        seed: int,
-        pa: int = None, 
+        prefferential_attachment: int = None, 
+        polarization_grouping_type: int = 0,
         d: int = None, 
         p: float = None,      # Optional graph parameters
         initialize: bool = True,
-        polarization_grouping_type: int = 0,
+        *args,
+        **kwargs
     ):
         """
         
@@ -65,22 +55,20 @@ class Model:
             omega (float): Proportion of individuals who polarize downwards.
         """        
         # Network parameters
-        self.N  = N
-        self.pa = pa
+        self.N  = network_size
+        self.pa = prefferential_attachment
         self.d  = d
         self.p  = p
         self.graph_type = graph_type
         
         # Individual parameters
-        self.mu    = mu
-        self.m     = m
+        self.mu    = memory_size
+        self.m     = code_length
         self.kappa = kappa
         self.alpha = alpha
         self.omega = omega
         self.lambd = lambd
         self.gamma = gamma
-        
-        self.seed = seed
         
         self.polarization_grouping_type = polarization_grouping_type
         
@@ -124,18 +112,18 @@ class Model:
     def vertex_tendencies(self):
         return self._vertex_tendencies
         
-    def create_graph(self, graph_type: str = 'barabasi'):
+    def create_graph(self):
         """
         Edite esta função para permitir a criação de redes com topologias diferentes. A função deve receber um nome identificando o tipo de rede, e/ou uma função de criação da rede.
         """ 
         if self.graph_type == 'barabasi':
-            self._G = nx.barabasi_albert_graph(self.N, self.pa, self.seed)
+            self._G = nx.barabasi_albert_graph(self.N, self.pa, seed)
         elif self.graph_type == 'complete':
             self._G = nx.complete_graph(self.N)
         elif self.graph_type == 'regular':
-            self._G = nx.random_regular_graph(n = self.N, d = self.d, seed = self.seed)
+            self._G = nx.random_regular_graph(n = self.N, d = self.d, seed = seed)
         elif self.graph_type == 'erdos':
-            self._G = nx.erdos_renyi_graph(n = self.N, p = self.p, seed = self.seed)
+            self._G = nx.erdos_renyi_graph(n = self.N, p = self.p, seed = seed)
         
     def compute_model_measures(self):
         self.compute_edge_weights()

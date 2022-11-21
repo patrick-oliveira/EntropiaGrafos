@@ -1,9 +1,122 @@
+import os
 import pickle
-import numpy as np
-from scripts.Memory import powers_of_two
-from scripts.Parameters import N, memory_size, code_length
-from scripts.Types import Dict
 from copy import deepcopy
+from itertools import product
+from pathlib import Path
+from typing import List, Tuple
+
+import numpy as np
+
+from opdynamics.utils.types import Dict, Parameters
+
+
+def get_runs(path: str):
+    return [x for x in os.listdir(path) if "run" in x]
+
+def get_mean_stats(param_list: Dict, results_path: str, T: int) -> Dict:
+    mean_stats = {}
+        
+    for param in product(*param_list.values()):
+        input_path = Path(results_path) / str(param)
+        try:
+            runs = get_runs(input_path)
+        except:
+            continue
+        
+        mean_run_stats = {
+            "Entropy": np.zeros(T),
+            "Proximity": np.zeros(T),
+            "Polarity": np.zeros(T),
+            "Distribution": np.zeros((32, T))
+        }
+        
+        num_runs = len(runs)
+        
+        for run in runs:
+            stats = pickle.load(open(input_path / run, "rb"))
+            mean_run_stats['Entropy'] += stats['Entropy']
+            mean_run_stats['Proximity'] += stats['Proximity']
+            mean_run_stats['Polarity'] += stats['Polarity']
+            mean_run_stats['Distribution'] += np.array(stats['Distribution']).T
+            
+        mean_run_stats['Entropy'] /= num_runs
+        mean_run_stats['Proximity'] /= num_runs
+        mean_run_stats['Polarity'] /= num_runs
+        mean_run_stats['Distribution'] /= num_runs
+        
+        mean_stats[param] = mean_run_stats
+        
+    return mean_stats
+
+def error_curve(
+    results_path: str,
+    params: Tuple,
+    T: int,
+) -> Dict[str, List[float]]:
+    entropy_abs_dif   = []
+    proximity_abs_dif = []
+    polarity_abs_dif  = []
+    
+    (mean_entropy_i,
+     mean_entropy_f)   = (np.zeros(T),
+                          np.zeros(T))
+    (mean_proximity_i,
+     mean_proximity_f) = (np.zeros(T),
+                          np.zeros(T))
+    
+    (mean_polarity_i,
+     mean_polarity_f)  = (np.zeros(T),
+                          np.zeros(T))
+
+    entropy_sum   = np.zeros(T)
+    proximity_sum = np.zeros(T)
+    polarity_sum  = np.zeros(T)
+    
+    input_path = Path(results_path) / str(params)
+    runs = get_runs(input_path)
+    
+    for k, run in enumerate(runs):
+        n = k + 1
+        
+        stats = pickle.load(open(input_path / run, "rb"))
+        
+        entropy   = stats['Entropy']
+        proximity = stats['Proximity']
+        polarity  = stats['Polarity']
+        
+        entropy_sum   += entropy
+        proximity_sum += proximity
+        polarity_sum  += polarity
+        
+        
+        mean_entropy_f   = entropy_sum / n
+        mean_proximity_f = proximity_sum / n
+        mean_polarity_f  = polarity_sum / n
+        
+        
+        entropy_abs_mean_difference   = np.abs((mean_entropy_f - mean_entropy_i).sum())
+        proximity_abs_mean_difference = np.abs((mean_proximity_f - mean_proximity_i).sum())
+        polarity_abs_mean_difference  = np.abs((mean_polarity_f - mean_polarity_i).sum())
+        
+        print("Mean Absolute Difference between runs {} and {}".format(n, n - 1))
+        print("{0: <34}: {:0.10f}".format("Entropy Mean Absolute Difference", entropy_abs_mean_difference))
+        print("{0: <34}: {:0.10f}".format("Proximity Mean Absolute Difference", proximity_abs_mean_difference))
+        print("{0: <34}: {:0.10f}".format("Polarity Mean Absolute Difference", polarity_abs_mean_difference))
+        
+        entropy_abs_dif.append(entropy_abs_mean_difference)
+        proximity_abs_dif.append(proximity_abs_mean_difference)
+        polarity_abs_dif.append(polarity_abs_mean_difference)
+        
+        mean_entropy_i = mean_entropy_f
+        mean_proximity_i = mean_proximity_f
+        mean_polarity_i = mean_polarity_f
+        
+    return {
+        "entropy": entropy_abs_dif,
+        "proximity": proximity_abs_dif,
+        "polarity": polarity_abs_dif
+    }
+
 
 class Statistic:
     '''
