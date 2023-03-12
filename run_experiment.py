@@ -1,5 +1,6 @@
 import argparse
 import json
+import random
 import multiprocessing as mp
 
 from opdynamics.simulation.experimentation import build_param_list, worker
@@ -29,10 +30,11 @@ if __name__ == "__main__":
     )
     
     arguments = parser.parse_args()
-    num_processes = mp.cpu_count() if arguments.num_processes == -1 else arguments['num_processes']
+    num_processes = mp.cpu_count() if arguments.num_processes == -1 else arguments.num_processes
     
     params = json.load(open(arguments.params_path, "r"))
-    simulation_params = build_param_list(params)        
+    simulation_params = build_param_list(params)   
+    random.shuffle(simulation_params)     
     simulation_params = split_list(simulation_params, num_processes)
     worker_input = list(zip(range(1, num_processes + 1), simulation_params))
     

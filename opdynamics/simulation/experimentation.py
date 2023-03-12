@@ -30,7 +30,7 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
         else:
             model, last_run = load_experiment(output_path)
             
-            if last_run == -2:
+            if last_run == -2 or last_run == int(params['num_repetitions']):
                 print(f"[WORKER {worker_id}] This parameter combination has already been simulated up to {params['num_repetitions']} or up to an acceptable error threshold.")
                 continue
             else:

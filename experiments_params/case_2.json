@@ -1,0 +1,22 @@
+{
+    "simulation_params": {
+        "graph_type": ["barabasi"],
+        "network_size": [500],
+        "memory_size": [256],
+        "code_length": [5],
+        "kappa": [0, 15, 30],
+        "lambd": [0, 0.3, 1],
+        "alpha": [1, 0.6, 0.2],
+        "omega": [0],
+        "gamma": [-1, 0, 1],
+        "preferential_attachment": [2],
+        "polarization_type": [0]
+    },
+    "general_params": {
+        "T": 500,
+        "num_repetitions": 200,
+        "early_stop": true,
+        "epsilon": 0.00000001,
+        "results_path": "results/case_2/"
+    }
+}

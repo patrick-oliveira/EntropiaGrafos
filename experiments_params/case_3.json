@@ -6,17 +6,17 @@
         "code_length": [5],
         "kappa": [0, 15, 30],
         "lambd": [0, 0.3, 1],
-        "alpha": [1, 0.6, 0.2],
-        "omega": [0],
+        "alpha": [0.8, 0.6, 0.5],
+        "omega": [0.5, 0.4, 0.2],
         "gamma": [-1, 0, 1],
         "preferential_attachment": [2],
         "polarization_type": [0]
     },
     "general_params": {
         "T": 500,
-        "num_repetitions": 500,
+        "num_repetitions": 200,
         "early_stop": true,
-        "epsilon": 0.0000001,
-        "results_path": "results/experiment_1/"
+        "epsilon": 0.00000001,
+        "results_path": "results/case_3/"
     }
 }
