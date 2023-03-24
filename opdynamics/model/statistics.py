@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
-
-from opdynamics.utils.tools import param_to_hash
 from opdynamics.utils.types import Dict, Parameters
 
 

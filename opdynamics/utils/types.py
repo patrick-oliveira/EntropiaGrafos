@@ -27,10 +27,6 @@ Parameters = TypedDict(
         "prefferential_attachment": int,
         "polarization_grouping_type": int,
         "T": int,
-        "num_repetitions": int,
-        "early_stop": bool,
-        "epsilon": float,
-        "results_path": str
     }
 )
 

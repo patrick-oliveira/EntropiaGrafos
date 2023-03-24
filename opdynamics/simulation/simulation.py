@@ -150,12 +150,12 @@ def evaluate_model(
                 errors["proximity"] <= epsilon and \
                     errors["polarity"] <= epsilon:
                         print(worker_id + f"Difference between current and last runs is below the {epsilon} threshold. Stopping simulation.")
+                        run_count(-2, save_path)
                         break
                     
         run_count(repetition, save_path)
        
     elapsedTime = sum(simulation_time)
-    run_count(-2, save_path)
 
     return elapsedTime, statistic_handler
        

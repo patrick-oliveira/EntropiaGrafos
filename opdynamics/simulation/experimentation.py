@@ -20,7 +20,9 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
     
     for k, params in enumerate(param_list):
         print(f"[WORKER {worker_id}] Param set {k + 1} out of {num_params}")
-        output_path = Path(params["results_path"]) / param_to_hash(params)
+        
+        simulation_params_tuple = tuple(params.values())[:-5]
+        output_path = Path(params["results_path"]) / param_to_hash(simulation_params_tuple)
         
         new_experiment = not output_path.exists()
         if new_experiment:
