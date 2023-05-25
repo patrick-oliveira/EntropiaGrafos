@@ -38,6 +38,7 @@ def make_dict(
     ]):
     return {k:v for k, v in zip(columns, param_list)}
 
+
 def get_path(params: tuple, experiments_path: str) -> str:
     exp_path = f"{experiments_path}/{param_to_hash(params)}"
     return exp_path
@@ -73,6 +74,18 @@ def get_mean_run_stats(runs_path: str, T: int) -> dict:
     mean_run_stats['Distribution'] /= num_runs
     
     return mean_run_stats
+
+
+def count_runs(param_list: dict, experiments_path: str) -> int:
+    params = list(product(*param_list.values()))
+    params = [x[:-5] for x in params if validate_params(make_dict(x))]
+    
+    d = {}
+    for param in params:
+        run_path = get_path(param, experiments_path)
+        d[param] = len(get_runs(run_path))
+    
+    return d
 
 def get_mean_stats(param_list: dict, experiment_path: str, T: int) -> dict:
     mean_stats = {}
