@@ -120,104 +120,28 @@ def error_curve(
 
 
 class Statistic:
-    '''
-    
-    '''
     def compute(self, model):
-        '''
-        
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Raises
-        ------
-        NotImplementedError
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        '''
         raise NotImplementedError
         
     def get_rep_mean(self, statistics: np.array) -> np.array:
         raise NotImplementedError
         
 class StatisticHandler:
-    '''
-    
-    '''
     def __init__(self):
-        '''
-        
-
-        Returns
-        -------
-        None.
-
-        '''
         self.stats_definitions = {}
         self.stats_values      = {}
         self.repetitions = []
 
     def new_statistic(self, name: str, function: Statistic) -> None:
-        '''
-        
-
-        Parameters
-        ----------
-        name : str
-            DESCRIPTION.
-        function : Statistic
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
-        '''
         if not (name in self.stats_definitions.keys()):
             self.stats_definitions[name] = function
             self.stats_values[name] = []
     
     def update_statistics(self, model) -> None:
-        '''
-        
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
-        '''
         for statistic in self.stats_definitions.keys():
             self.stats_values[statistic].append(self.stats_definitions[statistic].compute(model))
             
     def save_statistics(self, file_name: str = "statistics") -> None:
-        '''
-        
-
-        Parameters
-        ----------
-        file_name : str, optional
-            DESCRIPTION. The default is "statistics".
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
-        '''
         pickle.dump(self.stats_values, open(file_name+".pickle", "rb"))
         
     def get_statistics(self, rep_stats: bool = False) -> Dict:
@@ -251,20 +175,6 @@ class StatisticHandler:
 
 class MeanEntropy(Statistic):
     def compute(self, model) -> float:
-        '''
-        
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Returns
-        -------
-        float
-            DESCRIPTION.
-
-        '''
         return model.H
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
@@ -272,20 +182,6 @@ class MeanEntropy(Statistic):
     
 class MeanPolarity(Statistic):
     def compute(self, model) -> float:
-        '''
-            
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Returns
-        -------
-        float
-            DESCRIPTION.
-
-        '''
         return model.pi
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
@@ -293,20 +189,6 @@ class MeanPolarity(Statistic):
     
 class MeanProximity(Statistic):
     def compute(self, model) -> float:
-        '''
-        
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Returns
-        -------
-        float
-            DESCRIPTION.
-
-        '''
         return model.J
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
@@ -337,20 +219,6 @@ class MeanAcceptances(Statistic):
                         
 class InformationDistribution(Statistic):
     def compute(self, model) -> np.array:
-        '''
-        
-
-        Parameters
-        ----------
-        model : Model
-            DESCRIPTION.
-
-        Returns
-        -------
-        probability_distribution : TYPE
-            DESCRIPTION.
-
-        '''
         P = np.asarray([model.ind_vertex_objects[node].P_array*model.mu for node in model.G]).sum(axis = 0)/(model.mu*model.N)
         return P
     
