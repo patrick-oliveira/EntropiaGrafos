@@ -12,8 +12,10 @@ Memory = NewType('Memory', List[Binary])
 CodeDistribution = NewType('CodeDistribution', Dict[Binary, float])
 Weights = NewType('Weights', List[float])
 TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
+
 Figure = NewType('Figure', fig.Figure)
 Axis   = NewType('Figure', ax.Axes)
+
 l_multiply = lambda x, y: x * y
 l_sum      = lambda x, y: x + y
 
