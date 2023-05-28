@@ -29,5 +29,11 @@ class Parameters(TypedDict):
     gamma: int
     preferential_attachment: int
     polarization_type: int
-
-
+    
+class SimulationResult(TypedDict):
+    entropy: np.array
+    proximity: np.array
+    polarity: np.array
+    distribution: np.array
+    acceptances: dict
+    transmissions: dict
