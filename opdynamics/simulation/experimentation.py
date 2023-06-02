@@ -8,16 +8,20 @@ from typing import List, Tuple
 
 from opdynamics.model import Model
 from opdynamics.simulation.simulation import evaluate_model, initialize_model
-from opdynamics.utils.tools import param_to_hash
+from opdynamics.utils.reading_tools import param_to_hash
 from opdynamics.utils.types import Parameters
 
 
 def worker(worker_input: Tuple[int, List[Parameters]]):
     worker_id  = worker_input[0]
     param_list = worker_input[1]
+    
+    if type(param_list) != list:
+        param_list = [param_list]
+        
     num_params = len(param_list)
     print(f"[WORKER {worker_id}] Starting processes. Number of parameters combinations to simulate: {num_params}")
-    
+        
     for k, params in enumerate(param_list):
         print(f"[WORKER {worker_id}] Param set {k + 1} out of {num_params}")
         
