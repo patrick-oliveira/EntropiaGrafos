@@ -16,7 +16,7 @@
         "T": 2000,
         "num_repetitions": 1000,
         "early_stop": true,
-        "epsilon": 0.0000001,
-        "results_path": "results/epsilon_7_kappa_25/"
+        "epsilon": 0.0001,
+        "results_path": "results/epsilon_4_kappa_25/"
     }
 }
