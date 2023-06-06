@@ -4,7 +4,7 @@
         "network_size": [500],
         "memory_size": [256],
         "code_length": [5],
-        "kappa": [0, 15, 20, 25, 26, 27, 30],
+        "kappa": [0, 15, 20, 25, 26, 27, 28, 29, 30],
         "lambd": [0],
         "alpha": [0],
         "omega": [0],
