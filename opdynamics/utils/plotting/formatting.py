@@ -1,8 +1,99 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from opdynamics.utils.types import Figure, Axis
 from typing import Tuple, Union, List
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
+
+def get_ax_grid(nrows: int = 1, ncols: int = 1, p: int = 5):
+    return plt.subplots(
+        nrows = nrows,
+        ncols = ncols,
+        figsize = (p*ncols, p*nrows)
+    )
+
+def hist_classical_structure(
+    fig: Figure,
+    axis: Union[Axis, np.ndarray],
+    axis_width: float = 1.08,
+    tick_pad: int = 8,
+    tick_label_size: int = 12,
+    num_x_ticks: int = 10,
+    num_y_ticks: int = 5,
+    *args,
+    **kwargs
+):
+    if type(axis) != np.ndarray:
+        axis = np.array([axis])
+        
+    for ax in axis.flatten():
+        for axis_line in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis_line].set_linewidth(axis_width)
+            
+        ax.xaxis.set_major_locator(MaxNLocator(num_x_ticks))
+        ax.yaxis.set_major_locator(MaxNLocator(num_y_ticks))
+        ax.xaxis.set_minor_locator(AutoMinorLocator())
+        ax.yaxis.set_minor_locator(AutoMinorLocator())
+
+        ax.tick_params(
+            which = 'both',
+            width = axis_width
+        )
+        ax.tick_params(
+            which = 'major',
+            pad = tick_pad,
+            labelsize = tick_label_size,
+            length = 6
+        )
+        ax.tick_params(
+            which = 'minor',
+            length = 3
+        )
+        
+        ax.set_xticklabels([int(x) for x in ax.get_xticks()], rotation = 45)
+    return fig, axis
+
+def violin_classical_structure(
+    fig: Figure,
+    axis: Union[Axis, np.ndarray],
+    x_ticks: List[int],
+    x_tick_labels: List[str],
+    axis_width: float = 1.08,
+    tick_pad: int = 8,
+    tick_label_size: int = 12,
+    num_y_ticks: int = 5,
+    *args,
+    **kwargs
+):
+    if type(axis) != np.ndarray:
+        axis = np.array([axis])
+        
+    for ax in axis.flatten():
+        for axis_line in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis_line].set_linewidth(axis_width)
+            
+        ax.yaxis.set_major_locator(MaxNLocator(num_y_ticks))
+        ax.yaxis.set_minor_locator(AutoMinorLocator())
+
+        ax.tick_params(
+            which = 'both',
+            width = axis_width
+        )
+        ax.tick_params(
+            which = 'major',
+            pad = tick_pad,
+            labelsize = tick_label_size,
+            length = 6
+        )
+        ax.tick_params(
+            which = 'minor',
+            length = 3
+        )
+        
+        ax.set_xticks([1, 2, 3])
+        ax.set_xticklabels(x_tick_labels)
+        
+    return fig, axis
 
 def classical_structure(
     fig: Figure, 

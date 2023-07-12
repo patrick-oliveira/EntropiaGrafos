@@ -14,7 +14,7 @@
     },
     "general_params": {
         "T": 500,
-        "num_repetitions": 300,
+        "num_repetitions": 2000,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/case_3/"

@@ -54,7 +54,12 @@ def initialize_model(
     model_initialization_time = time.time() - start
     
     if verbose:
-        print(worker_id + f"Model initialized. Elapsed time: {np.round(model_initialization_time/60, 2)} min")
+        print(
+            worker_id +\
+            "Model initialized. Elapsed time: {} min".format(
+                np.round(model_initialization_time/60, 2)
+            )
+        )
     
     return initial_model
 
@@ -74,7 +79,7 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
     for name in s_names:
         try:
             statistic_handler.new_statistic(name, stats_dict[name]())
-        except:
+        except Exception:
             print(f"Error building statistic: {name}")
         
     return statistic_handler
@@ -127,7 +132,11 @@ def evaluate_model(
         simulation_time.append(repetition_time)
         
         if verbose:
-            print(worker_id + f"Finished repetition {repetition + 1}/{num_repetitions}. Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes")
+            print(
+                worker_id +\
+                f"Finished repetition {repetition + 1}/{num_repetitions}. "\
+                f"Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes"
+            )
         
         statistic_handler.end_repetition()
         
@@ -143,13 +152,17 @@ def evaluate_model(
                 "polarity": errors["polarity"][-1]
             }
             
-            print(worker_id + f"Last errors:")
+            print(worker_id + "Last errors:")
             pprint(errors)
             
             if errors["entropy"] <= epsilon and \
                 errors["proximity"] <= epsilon and \
                     errors["polarity"] <= epsilon:
-                        print(worker_id + f"Difference between current and last runs is below the {epsilon} threshold. Stopping simulation.")
+                        print(
+                            worker_id +\
+                            "Difference between current and last runs is below "\
+                            "the {epsilon} threshold. Stopping simulation."
+                        )
                         run_count(-2, save_path)
                         break
                     
@@ -161,7 +174,8 @@ def evaluate_model(
        
 def simulate(M: Model):
     """
-    Execute one iteration of the information propagation model, updating the model's parameters at the end. 
+    Execute one iteration of the information propagation model, updating the model's 
+    parameters at the end. 
     Return the execution time (minutes).
 
     Args:
@@ -173,11 +187,21 @@ def simulate(M: Model):
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
-        received = u_ind.receive_information(evaluate_information(distort(v_ind.X, v_ind.DistortionProbability), M.get_acceptance_probability(u, v)))
+        received = u_ind.receive_information(
+            evaluate_information(
+                distort(v_ind.X, v_ind.DistortionProbability), 
+                M.get_acceptance_probability(u, v)
+            )
+        )
         if received:
             v_ind.transmitted()
             u_ind.received()
-        received = v_ind.receive_information(evaluate_information(distort(u_ind.X, u_ind.DistortionProbability), M.get_acceptance_probability(v, u)))
+        received = v_ind.receive_information(
+            evaluate_information(
+                distort(u_ind.X, u_ind.DistortionProbability), 
+                M.get_acceptance_probability(v, u)
+            )
+        )
         if received:
             u_ind.transmitted()
             v_ind.received()

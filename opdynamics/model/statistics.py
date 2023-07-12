@@ -3,10 +3,10 @@ import pickle
 from copy import deepcopy
 from itertools import product
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
-from opdynamics.utils.types import Dict, Parameters
+from opdynamics.utils.types import Dict
 
 
 def get_runs(path: str):
@@ -19,7 +19,7 @@ def get_mean_stats(param_list: Dict, results_path: str, T: int) -> Dict:
         input_path = Path(results_path) / str(param)
         try:
             runs = get_runs(input_path)
-        except:
+        except Exception:
             continue
         
         mean_run_stats = {
@@ -95,14 +95,12 @@ def error_curve(
         mean_polarity_f  = polarity_sum / n
         
         
-        entropy_abs_mean_difference   = ((mean_entropy_f - mean_entropy_i)**2).mean()
-        proximity_abs_mean_difference = ((mean_proximity_f - mean_proximity_i)**2).mean()
-        polarity_abs_mean_difference  = ((mean_polarity_f - mean_polarity_i)**2).mean()  
-              
-        # print("Mean Absolute Difference between runs {} and {}".format(n, n - 1))
-        # print("{0: <34}: {:0.10f}".format("Entropy Mean Absolute Difference", entropy_abs_mean_difference))
-        # print("{0: <34}: {:0.10f}".format("Proximity Mean Absolute Difference", proximity_abs_mean_difference))
-        # print("{0: <34}: {:0.10f}".format("Polarity Mean Absolute Difference", polarity_abs_mean_difference))
+        entropy_abs_mean_difference   = ((mean_entropy_f \
+                                            - mean_entropy_i)**2).mean()
+        proximity_abs_mean_difference = ((mean_proximity_f \
+                                            - mean_proximity_i)**2).mean()
+        polarity_abs_mean_difference  = ((mean_polarity_f \
+                                            - mean_polarity_i)**2).mean()  
         
         entropy_abs_dif.append(entropy_abs_mean_difference)
         proximity_abs_dif.append(proximity_abs_mean_difference)
@@ -133,7 +131,7 @@ class StatisticHandler:
         self.repetitions = []
 
     def new_statistic(self, name: str, function: Statistic) -> None:
-        if not (name in self.stats_definitions.keys()):
+        if name not in self.stats_definitions.keys():
             self.stats_definitions[name] = function
             self.stats_values[name] = []
     
@@ -164,11 +162,16 @@ class StatisticHandler:
         self.reset_statistics()
         
     def get_rep_mean(self) -> Dict:
-        assert len(self.repetitions) > 0, 'At least one repetition should be completed to extract mean values of statistics.'
+        assert len(self.repetitions) > 0, 'At least one repetition should be '\
+                                    'completed to extract mean values of statistics.'
         mean_statistics = {}
         for statistic in self.stats_definitions.keys():
-            stats_array = np.asarray([rep_stats[statistic] for rep_stats in self.repetitions])
-            mean_statistics[statistic] = self.stats_definitions[statistic].get_rep_mean(stats_array)
+            stats_array = np.asarray(
+                [rep_stats[statistic] for rep_stats in self.repetitions]
+            )
+            mean_statistics[statistic] = self.stats_definitions[statistic].get_rep_mean(
+                stats_array
+            )
             
         return mean_statistics
         
@@ -197,21 +200,29 @@ class MeanProximity(Statistic):
 class MeanDelta(Statistic):
     def compute(self, model) -> float:
         
-        return np.asarray([model.ind_vertex_objects[node].delta for node in model.G]).mean()
+        return np.asarray(
+            [model.ind_vertex_objects[node].delta for node in model.G]
+        ).mean()
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
     
 class MeanTransmissions(Statistic):
     def compute(self, model) -> float:
-        return np.asarray([(model.ind_vertex_objects[node].transmissions, model.G.degree[node]) for node in model.G])
+        return np.asarray(
+            [(model.ind_vertex_objects[node].transmissions, model.G.degree[node]) \
+                for node in model.G]
+        )
     
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
     
 class MeanAcceptances(Statistic):
     def compute(self, model) -> float:
-        return np.asarray([(model.ind_vertex_objects[node].acceptances, model.G.degree[node]) for node in model.G])
+        return np.asarray(
+            [(model.ind_vertex_objects[node].acceptances, model.G.degree[node]) \
+                for node in model.G]
+        )
                           
     def get_rep_mean(self, statistics: np.array) -> np.array:
         return statistics.mean(axis = 0) if len(statistics.shape) > 1 else statistics
@@ -219,7 +230,9 @@ class MeanAcceptances(Statistic):
                         
 class InformationDistribution(Statistic):
     def compute(self, model) -> np.array:
-        P = np.asarray([model.ind_vertex_objects[node].P_array*model.mu for node in model.G]).sum(axis = 0)/(model.mu*model.N)
+        P = np.asarray(
+            [model.ind_vertex_objects[node].P_array*model.mu for node in model.G]
+        ).sum(axis = 0)/(model.mu*model.N)
         return P
     
     def get_rep_mean(self, statistics: np.array) -> np.array:

@@ -9,13 +9,10 @@ if __name__ == "__main__":
     num_processes = 2
     
     params_paths = [
-        "experiments_params/run_analysis_epsilon_4.json",
-        "experiments_params/run_analysis_epsilon_5.json",
-        "experiments_params/run_analysis_epsilon_6.json",
-        "experiments_params/run_analysis_epsilon_7.json",
-        "experiments_params/run_analysis_epsilon_8.json",
-        "experiments_params/run_analysis_epsilon_9.json",
-        "experiments_params/run_analysis_epsilon_10.json",
+        "experiments_params/run_analysis_epsilon_4_polarized.json",
+        "experiments_params/run_analysis_epsilon_5_polarized.json",
+        "experiments_params/run_analysis_epsilon_6_polarized.json",
+        "experiments_params/run_analysis_epsilon_7_polarized.json",
     ]
     for params_path in params_paths:
         params = json.load(open(params_path, "r"))

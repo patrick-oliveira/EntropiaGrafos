@@ -116,21 +116,21 @@ def grid_frames(
     
     return fig, axs
 
-def heat_plot(
-    X: np.array, 
-    size: Tuple[int] = None,
-    x_tick_labels: List[str] = None,
-    y_tick_labels: List[str] = None,
-    cmap: str = None
-) -> Tuple[Figure, Axis]:
-    fig, ax = plt.subplots(1, 1)
+def heat_plot(X: np.array, size: Tuple[int] = None,
+              x_tick_labels: List[str] = None,
+              y_tick_labels: List[str] = None,
+              cmap: str = None,
+              cbar: bool = False,
+              fig: Figure = None,
+              ax: Axis = None) -> Tuple[Figure, Axis]:
+    if fig == None and ax == None:
+        fig, ax = plt.subplots(1, 1)
+        if size != None:
+            fig.set_size_inches(size)
+        else:
+            fig.set_size_inches(w = 15, h = 10)
     
-    if size != None:
-        fig.set_size_inches(size)
-    else:
-        fig.set_size_inches(w = 15, h = 10)
-    
-    sns.heatmap(X, linewidth = 0, ax = ax, cmap = cmap)
+    sns.heatmap(X, linewidth = 0, ax = ax, cmap = cmap, cbar = cbar)
     
     ax.locator_params('x', nbins = 3)
     ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
