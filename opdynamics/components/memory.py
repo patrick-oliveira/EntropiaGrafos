@@ -7,7 +7,12 @@ from opdynamics.math.polarity import polarity
 from opdynamics.utils.types import Binary, CodeDistribution, Memory
 
 
-def initialize_memory(memory_size: int) -> Memory:
+def initialize_memory(
+    memory_size: int,
+    distribution: str = "binomial",
+    *args,
+    **kwargs    
+) -> Memory:
     """
     Create a list of size "mu" of random binary codes of an specified, fixed length, taken from a binomial distribution.
     The parameters are defined by the model.
@@ -15,11 +20,17 @@ def initialize_memory(memory_size: int) -> Memory:
     Returns:
         Memory: A tuple containing a numpy array of binary codes and it's corresponding polarities.
     """   
-    code_array = get_binary_codes(memory_size, code_length)
+    code_array = get_binary_codes(memory_size, code_length, distribution, *args, **kwargs)
     polarity_array = polarity(code_array)
     return [code_array, polarity_array]
 
-def get_binary_codes(mu: int, m: int) -> Memory: # Troque esse tipo de saída.
+def get_binary_codes(
+    mu: int, 
+    m: int,
+    distribution: str = "binomial",
+    *args,
+    **kwargs
+) -> Memory: # Troque esse tipo de saída.
     """
     Return a list of size "mu" of random binary codes of length "m" taken from a Binomial distribution of parameters (2**m, 0.5). 
 
@@ -29,9 +40,14 @@ def get_binary_codes(mu: int, m: int) -> Memory: # Troque esse tipo de saída.
 
     Returns:
         Memory: A np.array of binary codes.
-    """    
-    code_list = [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size = mu)] if mu != None else \
-                [generate_code(np.random.binomial(2**m, 0.5), m)]
+    """
+    if distribution == "binomial":
+        code_list = [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size = mu)] if mu != None else \
+                    [generate_code(np.random.binomial(2**m, 0.5), m)]
+    elif distribution == "poisson":
+        lam = kwargs["lam"] if "lam" in kwargs.keys() else 1
+        code_list = [generate_code(a, m) for a in np.random.poisson(lam, size = mu)] if mu != None else \
+                    [generate_code(np.random.poisson(lam), m)]
     code_array = np.asarray(code_list)
     return code_array
            

@@ -27,6 +27,7 @@ class Model:
         d: int = None, 
         p: float = None,
         initialize: bool = True,
+        distribution: str = "binomial",
         *args,
         **kwargs
     ):
@@ -69,12 +70,17 @@ class Model:
         self.omega = omega
         self.lambd = lambd
         self.gamma = gamma
+        self.distribution = distribution
         
         self.polarization_grouping_type = polarization_grouping_type
+        
+        self.args = args
+        self.kwargs = kwargs
         
         self.create_graph()
         self.E = self.G.number_of_edges()
         if initialize: self.initialize_model_info()
+        
 
     @property
     def H(self) -> float:
@@ -168,10 +174,17 @@ class Model:
         """
         Attribute to each node in the network a new instance of 'Individual'.
         """
-        nx.set_node_attributes(self.G, 
-                               {node : Individual(self.kappa, self.mu) \
-                                                    for node in self.G}, 
-                               name = 'Object')
+        nx.set_node_attributes(
+            self.G, 
+            {node : Individual(
+                self.kappa, 
+                self.mu, 
+                self.distribution,
+                *self.args,
+                **self.kwargs
+            ) for node in self.G}, 
+            name = 'Object'
+        )
         self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
             
     def group_individuals(self):

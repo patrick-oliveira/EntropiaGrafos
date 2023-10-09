@@ -49,7 +49,9 @@ def initialize_model(
         preferential_attachment = preferential_attachment,
         polarization_grouping_type = polarization_grouping_type, 
         d = degree, 
-        p = edge_prob
+        p = edge_prob,
+        distribution = "poisson",
+        lam = 10
     )
     model_initialization_time = time.time() - start
     

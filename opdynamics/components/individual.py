@@ -12,11 +12,18 @@ from opdynamics.utils.types import Binary, Memory
 
 
 class Individual:
-    def __init__(self, kappa: float, memory_size: int):
+    def __init__(
+        self, 
+        kappa: float, 
+        memory_size: int,
+        distribution: str = "binomial",
+        *args, 
+        **kwargs    
+    ):
         self.kappa = kappa
         self.memory_size = memory_size
         self.seed = random.randint(1, 100)
-        self.L = initialize_memory(memory_size)
+        self.L = initialize_memory(memory_size, distribution, *args, **kwargs)
         self.L_temp = []
         self.transmissions = 0
         self.acceptances = 0
