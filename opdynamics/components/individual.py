@@ -2,10 +2,9 @@ import random
 
 import numpy as np
 
-from opdynamics import max_H
+from opdynamics import MAX_H
 from opdynamics.components.memory import (initialize_memory,
-                                          probability_distribution,
-                                          random_selection)
+                                          probability_distribution)
 from opdynamics.math.entropy import memory_entropy
 from opdynamics.math.polarity import polarity
 from opdynamics.utils.types import Binary, Memory
@@ -13,12 +12,12 @@ from opdynamics.utils.types import Binary, Memory
 
 class Individual:
     def __init__(
-        self, 
-        kappa: float, 
+        self,
+        kappa: float,
         memory_size: int,
         distribution: str = "binomial",
-        *args, 
-        **kwargs    
+        *args,
+        **kwargs
     ):
         self.kappa = kappa
         self.memory_size = memory_size
@@ -78,7 +77,7 @@ class Individual:
         """
         Updates the probability of distortion due to imperfect memory..
         """        
-        self._delta = 1/(np.exp(self.kappa*(max_H - self.H)/max_H) + 1)
+        self._delta = 1/(np.exp(self.kappa*(MAX_H - self.H)/MAX_H) + 1)
     
     @property
     def pi(self):
@@ -86,9 +85,6 @@ class Individual:
 
     def compute_polarization(self):
         self._pi = self.L[1].mean()
-
-    def select_information(self):
-        return random_selection(self.P)
     
     def update_memory(self):
         if len(self.L_temp) > 0:

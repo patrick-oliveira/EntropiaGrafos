@@ -5,11 +5,12 @@ import matplotlib.figure as fig
 import networkx as nx
 import numpy as np
 
-Graph = NewType('Graph', nx.Graph)
-Array = NewType('Array', np.array)
-Binary = NewType('Binary', str)
+Binary = NewType('Binary', np.array)
+Polarity = NewType("Polarity", np.array)
 Memory = NewType('Memory', List[Binary])
-CodeDistribution = NewType('CodeDistribution', Dict[Binary, float])
+CodeDistribution = NewType('CodeDistribution', Dict[str, float])
+
+Graph = NewType('Graph', nx.Graph)
 Weights = NewType('Weights', List[float])
 TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
 
