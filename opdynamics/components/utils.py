@@ -1,5 +1,5 @@
 import numpy as np
-from opdynamics.utils.types import Binary
+from opdynamics.utils.types import Binary, CodeDistribution
 from opdynamics import CODE_LENGTH
 
 POWERS_OF_TWO = 2**np.arange(CODE_LENGTH)[::-1]
@@ -85,3 +85,23 @@ def binary_to_string(x: Binary) -> str:
         str: A string representation of the binary array.
     """
     return ''.join(list(x.astype(str)))
+
+
+def random_selection(distribution: CodeDistribution) -> Binary:
+    """
+    Randomly selects a code from a distribution based on the probability
+    of each code.
+
+    Args:
+        distribution (CodeDistribution): A dictionary where the keys are codes
+        and the values are their probabilities.
+
+    Returns:
+        Binary: The selected code in binary format.
+    """
+    x = np.random.uniform()
+    cumulative_probability = 0
+    for code in distribution.keys():
+        cumulative_probability += distribution[code]
+        if cumulative_probability >= x:
+            return string_to_binary(code)

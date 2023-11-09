@@ -21,7 +21,8 @@ def memory_entropy(distribution: CodeDistribution) -> float:
     Calculates the entropy of a given distribution.
 
     Parameters:
-    distribution (CodeDistribution): A dictionary-like object containing the frequency of each code.
+    distribution (CodeDistribution): A dictionary-like object containing
+    the frequency of each code.
 
     Returns:
     float: The memory entropy of the distribution.
@@ -29,25 +30,30 @@ def memory_entropy(distribution: CodeDistribution) -> float:
     P = np.asarray(list(distribution.values()))
     P = P[P > 0]
     return - shannon_entropy(P).sum()
-            
+
+
 def JSD(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
     """
-    Calculates the Jensen-Shannon divergence between two probability distributions.
+    Calculates the Jensen-Shannon divergence between two probability
+    distributions.
 
     Parameters:
     Pu (CodeDistribution): The first probability distribution.
     Pv (CodeDistribution): The second probability distribution.
 
     Returns:
-    float: The Jensen-Shannon divergence between the two probability distributions.
+    float: The Jensen-Shannon divergence between the two probability
+    distributions.
     """
-    M = {code:(Pu[code] + Pv[code])/2 for code in Pu}
-    
+    M = {code: (Pu[code] + Pv[code])/2 for code in Pu}
+
     return memory_entropy(M) - (memory_entropy(Pu) + memory_entropy(Pv))/2
+
 
 def S(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
     """
-    Calculates the similarity between two probability distributions using the Jensen-Shannon divergence.
+    Calculates the similarity between two probability distributions using the
+    Jensen-Shannon divergence.
 
     Args:
         Pu (CodeDistribution): The first probability distribution.
@@ -61,7 +67,8 @@ def S(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
 
 def D(P: CodeDistribution, Q: CodeDistribution) -> float:
     """
-    Calculates the Kullback-Leibler divergence between two probability distributions P and Q.
+    Calculates the Kullback-Leibler divergence between two probability
+    distributions P and Q.
 
     Args:
         P (Dict[str, float]): The first probability distribution.
@@ -72,11 +79,14 @@ def D(P: CodeDistribution, Q: CodeDistribution) -> float:
     """
     return sum(map(partial(_D, P, Q), P.keys()))
 
+
 def _D(P: CodeDistribution, Q: CodeDistribution, x: Binary):
     """
     Auxiliary function.
-    
-    Calculates the Kullback-Leibler divergence between two probability distributions P and Q for a given binary value x common to both distributions.
+
+    Calculates the Kullback-Leibler divergence between two probability
+    distributions P and Q for a given binary value x common to both
+    distributions.
 
     Args:
         P (CodeDistribution): The first probability distribution.
@@ -84,7 +94,8 @@ def _D(P: CodeDistribution, Q: CodeDistribution, x: Binary):
         x (Binary): The binary value for which to calculate the divergence.
 
     Returns:
-        The Kullback-Leibler divergence between P and Q for the given binary value x.
+        The Kullback-Leibler divergence between P and Q for the given binary
+        value x.
     """
     if P[x] == 0:
         return 0

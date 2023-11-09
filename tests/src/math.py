@@ -2,8 +2,10 @@ import unittest as ut
 import numpy as np
 from opdynamics import SEED
 from opdynamics.math.polarity import polarity_weights, polarity
-from opdynamics.math.entropy import shannon_entropy
-from opdynamics.components.memory import get_binary_codes
+from opdynamics.math.entropy import shannon_entropy, memory_entropy
+from opdynamics.components.memory import (get_binary_codes,
+                                          initialize_memory,
+                                          probability_distribution)
 
 
 class TestPolarity(ut.TestCase):
@@ -36,3 +38,10 @@ class TestPolarity(ut.TestCase):
         self.assertAlmostEqual(shannon_entropy(0.5), -0.5, places=2)
         self.assertAlmostEqual(shannon_entropy(0.25), -0.5, places=2)
         self.assertAlmostEqual(shannon_entropy(0.75), -0.31, places=2)
+
+    def test_memory_entropy(self):
+        codes, polarity = initialize_memory(256, 5, "binomial", SEED)
+        dist = probability_distribution(codes, 256, 5)
+
+        entropy = memory_entropy(dist)
+        self.assertAlmostEqual(entropy, 3.50606095, places=2)

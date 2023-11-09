@@ -1,6 +1,7 @@
 import unittest as ut
 import numpy as np
 from opdynamics import SEED
+from opdynamics.components.individual import Individual
 from opdynamics.components.memory import (generate_code,
                                           get_binary_codes,
                                           initialize_memory,
@@ -10,7 +11,8 @@ from opdynamics.components.utils import (to_bin,
                                          complete_zeros,
                                          string_to_binary,
                                          binary_to_int,
-                                         binary_to_string)
+                                         binary_to_string,
+                                         random_selection)
 
 
 class TestComponents(ut.TestCase):
@@ -124,3 +126,32 @@ class TestComponents(ut.TestCase):
 
         probs = dist.values()
         self.assertEqual(np.round(sum(probs), 1), 1.0)
+
+    def test_random_selection(self):
+        codes, polarity = initialize_memory(256, 5, "binomial", SEED)
+        dist = probability_distribution(codes, 256, 5)
+
+        random_codes = []
+        for _ in range(100000):
+            random_codes.append(binary_to_int(random_selection(dist)))
+
+        mean = np.mean(random_codes)
+
+        self.assertAlmostEqual(mean, 15.8, places=0)
+
+    def test_individual(self):
+        ind = Individual(
+            kappa=0,
+            memory_size=256,
+            code_length=5,
+            distribution="binomial",
+            seed=SEED
+        )
+
+        ind_H = ind.H
+        ind_delta = ind.delta
+        ind_pi = ind.pi
+
+        self.assertAlmostEqual(ind_H, 3.50606095, places=2)
+        self.assertAlmostEqual(ind_delta, 0.5, places=2)
+        self.assertAlmostEqual(ind_pi, 0.5046875, places=2)
