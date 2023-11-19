@@ -6,6 +6,7 @@ from opdynamics import MAX_H
 from opdynamics.math.entropy import memory_entropy
 from opdynamics.math.polarity import polarity
 from opdynamics.utils.types import Binary, Memory, Polarity
+from opdynamics.model.dynamics import evaluate_information
 from opdynamics.components.utils import random_selection
 from opdynamics.components.memory import (initialize_memory,
                                           probability_distribution)
@@ -151,12 +152,13 @@ class Individual:
         """
         return np.array(list(self.P.values()))
 
-    def receive_information(self, new_code: Binary) -> bool:
+    def receive_information(self, new_code: Binary, p: float) -> bool:
         """
         Receives a new piece of information. Saves it into a temporary list
         to be updated into the memory later, returning a confirmation if the
         information was received or not.
         """
+        new_code = evaluate_information(new_code, p)
         if new_code is not None:
             self.L_temp.append(new_code)
             return True

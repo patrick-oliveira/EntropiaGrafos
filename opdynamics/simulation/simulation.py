@@ -1,216 +1,177 @@
-import pickle
 import time
-from copy import deepcopy
-from pathlib import Path
-from pprint import pprint
-from typing import Dict, List, Tuple, Union
-
 import numpy as np
 
-from opdynamics.model import Model, stats_dict
-from opdynamics.model.dynamics import distort, evaluate_information
-from opdynamics.model.statistics import StatisticHandler, error_curve
+from copy import deepcopy
+from pathlib import Path
+from typing import Tuple, Union
+from opdynamics.model import Model
+from opdynamics.model.dynamics import distort
+from opdynamics.statistics.handler import StatisticHandler
+from opdynamics.statistics.utils import error_curves
+from opdynamics.simulation.utils import (save_simulation_stats,
+                                         check_convergence,
+                                         run_count)
 
-
-def initialize_model(
-    graph_type: str, 
-    network_size: int,
-    memory_size: int, 
-    code_length: int,
-    kappa: float, 
-    lambd: float,
-    alpha: float, 
-    omega: float,
-    gamma: float,
-    preferential_attachment: float = None,
-    polarization_grouping_type: int = 0, 
-    degree: int = None, 
-    edge_prob: float = None, 
-    verbose: bool = False,
-    worker_id: int = None,
-    *args,
-    **kwargs,
-) -> Model:
-    worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
-    if verbose:
-        print(worker_id + "Initializing model.")
-    
-    start = time.time()
-    initial_model = Model(
-        graph_type = graph_type, 
-        network_size = network_size, 
-        memory_size = memory_size, 
-        code_length = code_length, 
-        kappa = kappa, 
-        lambd = lambd, 
-        alpha = alpha, 
-        omega = omega, 
-        gamma = gamma, 
-        preferential_attachment = preferential_attachment,
-        polarization_grouping_type = polarization_grouping_type, 
-        d = degree, 
-        p = edge_prob,
-        distribution = "poisson",
-        lam = 10
-    )
-    model_initialization_time = time.time() - start
-    
-    if verbose:
-        print(
-            worker_id +\
-            "Model initialized. Elapsed time: {} min".format(
-                np.round(model_initialization_time/60, 2)
-            )
-        )
-    
-    return initial_model
-
-def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
-    statistic_handler = StatisticHandler()
-    
-    if s_names is None:
-        s_names = [
-            "Entropy",
-            "Proximity",
-            "Polarity",
-            "Distribution",
-            "Acceptance",
-            "Transmission"
-        ]
-    
-    for name in s_names:
-        try:
-            statistic_handler.new_statistic(name, stats_dict[name]())
-        except Exception:
-            print(f"Error building statistic: {name}")
-        
-    return statistic_handler
-
-def Parallel_evaluateModel(
-    initial_model: Model,
-    T: int, 
-    num_repetitions: int, 
-    verbose: bool = False
-) -> Tuple[float, List[Dict], Dict]:
-    pass
 
 def evaluate_model(
     initial_model: Model,
-    T: int, 
+    T: int,
     num_repetitions: int = 1,
     early_stop: bool = False,
     epsilon: float = 1e-5,
-    last_run: int = -1, 
+    last_run: int = -1,
     verbose: bool = False,
-    save_runs: bool = False, 
+    save_runs: bool = False,
     save_path: Union[Path, str] = None,
     worker_id: int = None,
     *args,
     **kwargs
 ) -> Tuple[float, StatisticHandler]:
     """
-    Evaluate a new model over T iterations.
+    Evaluates a model by simulating its evolution over a given number of
+    repetitions and iterations.
+
+    Args:
+        initial_model (Model): The initial model to be evaluated.
+        T (int): The number of iterations to simulate the model for each
+        repetition.
+        num_repetitions (int, optional): The number of repetitions to perform.
+        Defaults to 1.
+        early_stop (bool, optional): Whether to stop the evaluation early if
+        the model converges. Defaults to False.
+        epsilon (float, optional): The threshold for convergence. Defaults
+        to 1e-5.
+        last_run (int, optional): The index of the last run. Defaults to -1.
+        verbose (bool, optional): Whether to print progress messages. Defaults
+        to False.
+        save_runs (bool, optional): Whether to save the model stats for each
+        repetition. Defaults to False.
+        save_path (Union[Path, str], optional): The path to save the model
+        stats. Defaults to None.
+        worker_id (int, optional): The ID of the worker. Defaults to None.
+        *args: Additional positional arguments.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        Tuple[float, StatisticHandler]: A tuple containing the total elapsed
+        time and the statistic handler object.
     """
     worker_id = f"[WORKER {worker_id}] " if worker_id is not None else ""
     if verbose:
         print(worker_id + "Model evaluation started.")
         print(worker_id + f"Number of repetitions = {num_repetitions}")
-        
+
+    statistic_handler = StatisticHandler()
     simulation_time = []
-    statistic_handler = init_statistic_handler()
-    
+    # start from where it has stopped
     current_run = last_run + 1
     for repetition in range(current_run, num_repetitions):
         if verbose:
             print(worker_id + f"Repetition {repetition}/{num_repetitions}")
-        
+
         model = deepcopy(initial_model)
-        
+
         start = time.time()
+        # each repetition evolves the model along T iterations
         for _ in range(T):
             simulate(model)
             statistic_handler.update_statistics(model)
+        # end of repetition, taking a snapshot of the model stats
+        statistic_handler.end_repetition()
         repetition_time = time.time() - start
         simulation_time.append(repetition_time)
-        
+
+        if save_runs:
+            # save the model stats for each repetition,
+            # this block should be agnostic regarding
+            # the data structure of the stats
+            file_path = save_path / f"run_{repetition}_stats.pkl"
+            save_simulation_stats(
+                stats=statistic_handler.repetitions[-1],
+                mode="pickle",
+                stats_path=file_path
+            )
+
+        if early_stop:
+            # Check if the model has converged
+            # by computing the evolution of the error curves
+            # along the repetitions and see if it is below
+            # the threshold epsilon
+            converged = check_convergence(
+                error_curves(save_path, T),
+                epsilon
+            )
+            if converged:
+                run_count(-2, save_path)
+                break
+        run_count(repetition, save_path)
+
         if verbose:
             print(
-                worker_id +\
-                f"Finished repetition {repetition + 1}/{num_repetitions}. "\
+                worker_id +
+                f"Finished repetition {repetition + 1}/{num_repetitions}. " +
                 f"Elapsed time: {np.round(simulation_time[-1]/60, 2)} minutes"
             )
-        
-        statistic_handler.end_repetition()
-        
-        if save_runs:
-            with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
-                pickle.dump(statistic_handler.repetitions[-1], file)
-                
-        if early_stop:
-            errors = error_curve(save_path, T)
-            errors = {
-                "entropy": errors["entropy"][-1],
-                "proximity": errors["proximity"][-1],
-                "polarity": errors["polarity"][-1]
-            }
-            
-            print(worker_id + "Last errors:")
-            pprint(errors)
-            
-            if errors["entropy"] <= epsilon and \
-                errors["proximity"] <= epsilon and \
-                    errors["polarity"] <= epsilon:
-                        print(
-                            worker_id +\
-                            "Difference between current and last runs is below "\
-                            "the {epsilon} threshold. Stopping simulation."
-                        )
-                        run_count(-2, save_path)
-                        break
-                    
-        run_count(repetition, save_path)
-       
-    elapsedTime = sum(simulation_time)
 
+    elapsedTime = sum(simulation_time)
     return elapsedTime, statistic_handler
-       
+
+
 def simulate(M: Model):
     """
-    Execute one iteration of the information propagation model, updating the model's 
-    parameters at the end. 
-    Return the execution time (minutes).
+    Simulates the information exchange process between nodes in a graph.
 
-    Args:
-        M (Model): A model instance.  
+    Parameters:
+    M (Model): The model containing the graph and individuals.
 
     Returns:
-        None.
+    None
     """
+    # each node will exchange information with each of its neighbors
     for u, v in M.G.edges():
         u_ind = M.indInfo(u)
         v_ind = M.indInfo(v)
+
+        # V transmits to U
+        # V gets an information and distorts it according to
+        # its polarization tendency and memory entropy
+        v_info = v_ind.X
+        v_info = distort(v_info, v_ind.DistortionProbability)
+
+        # U has a probability of accepting the information
+        # from V
+        # U returns an confirmation if it accepts the information
+        acceptance_v_to_u = M.get_acceptance_probability(u, v)
         received = u_ind.receive_information(
-            evaluate_information(
-                distort(v_ind.X, v_ind.DistortionProbability), 
-                M.get_acceptance_probability(u, v)
-            )
+            v_info,
+            acceptance_v_to_u
         )
+        # If accepted, increase the transmission counter of V and
+        # acceptance counter of U
         if received:
             v_ind.transmitted()
             u_ind.received()
+
+        # U transmits to V
+        # U gets an information and distorts it according to
+        # its polarization tendency and memory entropy
+        u_info = u_ind.X
+        u_info = distort(u_info, u_ind.DistortionProbability)
+
+        # V has a probability of accepting the information
+        # from U
+        # V returns an confirmation if it accepts the information
+        acceptance_u_to_v = M.get_acceptance_probability(v, u)
         received = v_ind.receive_information(
-            evaluate_information(
-                distort(u_ind.X, u_ind.DistortionProbability), 
-                M.get_acceptance_probability(v, u)
-            )
+            u_info,
+            acceptance_u_to_v
         )
+        # If accepted, increase the transmission counter of U and
+        # acceptance counter of V
         if received:
             u_ind.transmitted()
             v_ind.received()
-    
+
+    # after all exchanges, updates the memory of each individual,
+    # its statistics and the global model statistics
     M.update_model()
-    
-def run_count(run: int, path: Path):
-    f = open(path / "last_run.txt", "w")
-    f.write(str(run))
-    f.close()

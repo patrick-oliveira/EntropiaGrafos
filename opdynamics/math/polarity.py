@@ -33,3 +33,17 @@ def polarity(x: Binary, code_length: int, seed: int) -> float:
         float: The information's polarity (a weighted average)
     """
     return np.dot(x, polarity_weights(code_length, seed))
+
+
+def xi(lambd: float) -> float:
+    """
+    Distortion probability related to the polarization tendency of the
+    individual.
+
+    Args:
+        lambd (float): The polarization factor defined for the model.
+
+    Returns:
+        float: The distortion probability between (0, 0.5).
+    """
+    return 1 / (np.exp(lambd) + 1)
