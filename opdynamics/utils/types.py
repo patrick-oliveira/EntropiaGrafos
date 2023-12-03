@@ -24,11 +24,11 @@ class Parameters(TypedDict):
     network_size: int
     memory_size: int
     code_length: int
-    kappa: int
-    lambd: int
-    alpha: int
-    omega: int
-    gamma: int
+    kappa: float
+    lambd: float
+    alpha: float
+    omega: float
+    gamma: float
     preferential_attachment: int
     polarization_type: int
     

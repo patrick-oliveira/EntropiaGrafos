@@ -25,12 +25,12 @@ def initialize_memory(
     return [code_array, polarity_array]
 
 def get_binary_codes(
-    mu: int, 
+    mu: int,
     m: int,
     distribution: str = "binomial",
     *args,
     **kwargs
-) -> Memory: # Troque esse tipo de saída.
+) -> Memory:
     """
     Return a list of size "mu" of random binary codes of length "m" taken from a Binomial distribution of parameters (2**m, 0.5). 
 
@@ -42,12 +42,31 @@ def get_binary_codes(
         Memory: A np.array of binary codes.
     """
     if distribution == "binomial":
-        code_list = [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size = mu)] if mu != None else \
+        code_list = [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size=mu)] if mu != None else \
                     [generate_code(np.random.binomial(2**m, 0.5), m)]
     elif distribution == "poisson":
         lam = kwargs["lam"] if "lam" in kwargs.keys() else 1
-        code_list = [generate_code(a, m) for a in np.random.poisson(lam, size = mu)] if mu != None else \
+        code_list = [generate_code(a, m) for a in np.random.poisson(lam, size=mu)] if mu != None else \
                     [generate_code(np.random.poisson(lam), m)]
+
+    elif distribution == "from_list":
+        assert "base_list" in kwargs.keys(), \
+            ("You must provide a list of integers to sample from if "
+             "'distribution' is 'from_list'.")
+
+        base_info_list = kwargs["base_list"]
+        probabilities = np.linspace(0, 1, len(base_info_list) + 1)[1:]
+
+        def f(p: float) -> int:
+            for k in range(len(probabilities)):
+                if p <= probabilities[k]:
+                    return base_info_list[k]
+        integers = np.random.uniform(0, 1, size=mu)
+        integers = [f(x) for x in integers]
+
+        code_list = [generate_code(a, m) for a in integers] if mu is not None \
+            else [generate_code(integers[0], m)]
+
     code_array = np.asarray(code_list)
     return code_array
            

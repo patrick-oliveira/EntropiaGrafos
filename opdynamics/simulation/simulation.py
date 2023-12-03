@@ -28,6 +28,7 @@ def initialize_model(
     edge_prob: float = None, 
     verbose: bool = False,
     worker_id: int = None,
+    distribution: str = "binomial",
     *args,
     **kwargs,
 ) -> Model:
@@ -50,8 +51,8 @@ def initialize_model(
         polarization_grouping_type = polarization_grouping_type, 
         d = degree, 
         p = edge_prob,
-        distribution = "poisson",
-        lam = 10
+        distribution = distribution,
+        **kwargs
     )
     model_initialization_time = time.time() - start
     

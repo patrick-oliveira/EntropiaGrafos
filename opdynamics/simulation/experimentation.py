@@ -61,9 +61,9 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
         end = time()
         print(f"[WORKER {worker_id}] Finished simulation. Elapsed time (s): {end - start}")
     
-def make_new_experiment(params: Parameters, output_path: Path) -> Model:
+def make_new_experiment(params: Parameters, output_path: Path, **kwargs) -> Model:
     os.makedirs(output_path)
-    model = initialize_model(**params)
+    model = initialize_model(**params, **kwargs)
 
     with open(output_path / "initial_model.pkl", "wb") as file:
         pickle.dump(model, file)
