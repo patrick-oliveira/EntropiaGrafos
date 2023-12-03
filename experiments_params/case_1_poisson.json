@@ -1,10 +1,10 @@
 {
-    "simulation_parameters": {
+    "simulation_params": {
         "graph_type": ["barabasi"],
         "network_size": [500],
         "memory_size": [256],
         "code_length": [5],
-        "kappa": [0, 30],
+        "kappa": [0, 15, 30],
         "lambd": [0],
         "alpha": [0],
         "omega": [0],
@@ -12,11 +12,11 @@
         "preferential_attachment": [2],
         "polarization_type": [0]
     },
-    "general_parameters": {
-        "T": 500,
-        "num_repetitions": 5000,
+    "general_params": {
+        "T": 1000,
+        "num_repetitions": 10,
         "early_stop": true,
-        "epsilon": 0.000001,
-        "results_path": "results/case_0/"
+        "epsilon": 0.000000001,
+        "results_path": "results/case_1_poisson/"
     }
 }

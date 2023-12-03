@@ -4,7 +4,7 @@ import os
 import pickle
 
 from itertools import product
-from opdynamics.model import Model
+from opdynamics.model.model import Model
 from opdynamics.utils.types import Parameters
 from itertools import islice
 from typing import Dict, List, Tuple

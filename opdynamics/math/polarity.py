@@ -1,30 +1,49 @@
 import numpy as np
 
-from opdynamics import code_length, seed
-from opdynamics.utils.types import Binary, Weights
+from opdynamics.utils.types import Binary
 
 
-def polarity_weights() -> Weights:
+def polarity_weights(code_length: int, seed: int) -> np.ndarray:
     """
     Return a normalized list of 'm' random values.
-    These values are used as weights to calculate the polarity of a binary code.
+    These values are used as weights to calculate the polarity of a
+    binary code.
+
+    Args:
+        code_length (int): The length of the binary code.
 
     Returns:
-        Weights: A numpy array of 'm' normalized random values.
-    """    
+        np.ndarray: A numpy array of 'm' normalized random values.
+    """
+    np.random.seed(seed)
+
     v = np.ones(code_length)
     return v/sum(v)
 
-def polarity(x: Binary) -> float:
-    """Return the weighted average of bits using "beta" as weight vector.
+
+def polarity(x: Binary, code_length: int, seed: int) -> float:
+    """
+    Return the weighted average of bits using "beta" as weight vector.
 
     Args:
-        x (Binary): A binary code (numpy array of bits) or a list of binary codes
+        x (Binary): A binary code (array of bits)
+        beta (Binary): A weight vector (list of bits)
 
     Returns:
         float: The information's polarity (a weighted average)
-    """ 
-    return np.dot(beta, x.T)
+    """
+    return np.dot(x, polarity_weights(code_length, seed))
 
-np.random.seed(seed)
-beta = polarity_weights()
+
+def xi(lambd: float) -> float:
+    """
+    Distortion probability related to the polarization tendency of the
+    individual.
+
+    Args:
+        lambd (float): The polarization factor defined for the model.
+
+    Returns:
+        float: The distortion probability between (0, 0.5).
+    """
+    return 1 / (np.exp(lambd) + 1)

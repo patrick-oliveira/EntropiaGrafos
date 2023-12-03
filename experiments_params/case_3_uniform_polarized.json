@@ -1,0 +1,24 @@
+{
+    "simulation_parameters": {
+        "graph_type": ["barabasi"],
+        "network_size": [500],
+        "memory_size": [256],
+        "code_length": [5],
+        "kappa": [0, 15, 25],
+        "lambd": [0, 0.3, 1],
+        "alpha": [0.4, 0.6, 0.5],
+        "omega": [0.4, 0.2],
+        "gamma": [0],
+        "preferential_attachment": [2],
+        "polarization_type": [0],
+        "distribution": ["from_list"],
+        "base_list": [[3, 5, 27, 29]]
+    },
+    "general_parameters": {
+        "T": 500,
+        "num_repetitions": 2000,
+        "early_stop": true,
+        "epsilon": 0.001,
+        "results_path": "results/case_3_uniform_polarized/"
+    }
+}
