@@ -1,32 +1,25 @@
+from typing import Dict, List, NewType, TypedDict
+
 import matplotlib.axes as ax
 import matplotlib.figure as fig
 import networkx as nx
 import numpy as np
-from typing import (Dict,
-                    List,
-                    NewType,
-                    TypedDict,
-                    Optional)
 
-Binary = NewType('Binary', np.array)
-Polarity = NewType("Polarity", np.array)
-Memory = NewType('Memory', List[Binary])
-CodeDistribution = NewType('CodeDistribution', Dict[str, float])
 Graph = NewType('Graph', nx.Graph)
-
+Array = NewType('Array', np.array)
+Binary = NewType('Binary', str)
+Memory = NewType('Memory', List[Binary])
+CodeDistribution = NewType('CodeDistribution', Dict[Binary, float])
 Weights = NewType('Weights', List[float])
 TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
 
 Figure = NewType('Figure', fig.Figure)
-Axis = NewType('Figure', ax.Axes)
+Axis   = NewType('Figure', ax.Axes)
 
+l_multiply = lambda x, y: x * y
+l_sum      = lambda x, y: x + y
 
-class ExperimentParameters(TypedDict):
-    simulation_parameters: Dict[str, List[str | int | float]]
-    GeneralParameters: Dict[str, str | int | float]
-
-
-class SimulationParameters(TypedDict):
+class Parameters(TypedDict):
     graph_type: str
     network_size: int
     memory_size: int
@@ -37,31 +30,12 @@ class SimulationParameters(TypedDict):
     omega: int
     gamma: int
     preferential_attachment: int
-    polarization_grouping_type: int
-    distribution: Optional[str]
-    regular_graph_d: Optional[int]
-    erdos_graph_p: Optional[float]
-    lam: Optional[float]
-    base_list: Optional[List[int]]
-
-
-class GeneralParameters(TypedDict):
-    T: int
-    num_repetitions: int
-    early_stop: bool
-    epsilon: float
-    results_path: str
-
-
-class Parameters(TypedDict):
-    simulation_parameters: SimulationParameters
-    general_parameters: GeneralParameters
-
-
+    polarization_type: int
+    
 class SimulationResult(TypedDict):
-    entropy: np.ndarray
-    proximity: np.ndarray
-    polarity: np.ndarray
-    distribution: np.ndarray
-    acceptances: Dict[int, int]
-    transmissions: Dict[int, int]
+    entropy: np.array
+    proximity: np.array
+    polarity: np.array
+    distribution: np.array
+    acceptances: dict
+    transmissions: dict

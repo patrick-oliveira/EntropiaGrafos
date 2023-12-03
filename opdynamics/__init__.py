@@ -1,8 +1,8 @@
 # Length of binary codes
-CODE_LENGTH  = 5
+code_length  = 5
 
 # Maximum Entropy
-MAX_H = CODE_LENGTH # por que é isso mesmo?
+max_H = code_length # por que é isso mesmo?
 
 # General Parameters
-SEED = 42
+seed = 42
