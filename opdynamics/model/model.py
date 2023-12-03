@@ -275,7 +275,7 @@ class Model:
         """
         Computes the mean entropy of the network's individuals.
         """
-        self._H = sum([self.indInfo(node).H for node in self.G])/self.N
+        self._H = sum([self.indInfo(node).H for node in self.G]) / self.N
 
     def compute_mean_edge_weight(self) -> None:
         '''
@@ -289,7 +289,7 @@ class Model:
         """
         Computes the mean polarity of the network's individuals.
         """
-        self._pi = sum([self.indInfo(node).pi for node in self.G])/self.N
+        self._pi = sum([self.indInfo(node).pi for node in self.G]) / self.N
 
     def update_model(self):
         """

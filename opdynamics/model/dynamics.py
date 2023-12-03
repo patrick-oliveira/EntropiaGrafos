@@ -148,6 +148,6 @@ def acceptance_probability(
 
     # measures the popularity of the sender in relation to the receiver and
     # its neighbors
-    sigma_ratio = v_s/u_ms
+    sigma_ratio = v_s / u_ms
 
     return acc_prob(sigma_ratio, G[u][v]['Distance'])

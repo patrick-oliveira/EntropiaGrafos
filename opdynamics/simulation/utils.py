@@ -95,7 +95,11 @@ def param_to_hash(params: tuple) -> str:
     Transforms the list of parameters values into a hash string.
 
     Parameters:
+<<<<<<< HEAD
         params (tuple): The dictionary containing the
+=======
+        params (Dict[str, str | float | int]): The dictionary containing the
+>>>>>>> 36b10b161e5083e6a0554d131dd0984d105fe07e
         parameter values. The params must be the _simulation_params_
         dictionary, not including the general params (T, num_repetitions,
         early_stop, epsilon, and results_path)

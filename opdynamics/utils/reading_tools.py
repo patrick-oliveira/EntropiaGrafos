@@ -55,7 +55,6 @@ def validate_params(params: Parameters) -> bool:
 
     return True
 
-
 def get_results_path(params: Parameters, results_path: str) -> str:
     param_hash = param_to_hash(make_tuple(params))
     result_path = str(Path(results_path) / param_hash)
