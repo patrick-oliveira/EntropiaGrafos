@@ -6,17 +6,20 @@ import multiprocessing as mp
 from opdynamics.simulation.experimentation import build_param_list, worker
 from opdynamics.utils.tools import split_list
 
-parser = argparse.ArgumentParser()    
+parser = argparse.ArgumentParser()
 
 if __name__ == "__main__":
     parser.add_argument(
         "-pp",
         "--params_path",
-        type = str, 
-        action = 'store', 
-        required = True, 
+        type = str,
+        action = 'store',
+        required = True,
         dest = 'params_path',
-        help = 'Endereço para um arquivo json contendo os parâmetros da simulação'
+        help =
+        """
+            Path for a json file containing the set of parameters.
+        """
     )
     parser.add_argument(
         "-np",
@@ -26,21 +29,34 @@ if __name__ == "__main__":
         default = -1,
         type = int,
         dest = 'num_processes',
-        help = "Número de processos a serem carregados para paralelizar a simulação de múltiplas combinações de parâmetros."
+        help =
+        """
+            Number of processes to use. If -1, the number of processes will be
+            equal to the number of cores available.
+        """
     )
-    
+
     arguments = parser.parse_args()
-    num_processes = mp.cpu_count() if arguments.num_processes == -1 else arguments.num_processes
-    
+    num_processes = (
+        mp.cpu_count() if arguments.num_processes == -1
+        else arguments.num_processes
+    )
+
     params = json.load(open(arguments.params_path, "r"))
-    simulation_params = build_param_list(params)   
-    random.shuffle(simulation_params)     
+    simulation_params = build_param_list(params)
+    random.shuffle(simulation_params)
     simulation_params = split_list(simulation_params, num_processes)
     worker_input = list(zip(range(1, num_processes + 1), simulation_params))
-    
-    print(f"Initializing simulations with {num_processes} workers.")
-    print(f"Number of iterations: {params['general_params']['T']}")
-    print(f"Number of repetitions: {params['general_params']['num_repetitions']}")
-    
+
+    print("Initializing simulations with {} workers.".format(
+        num_processes
+    ))
+    print("Number of iterations: {}".format(
+        params['general_params']['T']
+    ))
+    print("Number of repetitions: {}".format(
+        params['general_params']['num_repetitions']
+    ))
+
     with mp.Pool(processes = num_processes) as pool:
         pool.map(worker, worker_input)
