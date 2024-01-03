@@ -1,8 +1,9 @@
 import numpy as np
-from opdynamics.utils.types import Binary, CodeDistribution
-from opdynamics import CODE_LENGTH
+from opdynamics.utils.types import CodeDistribution
+from opdynamics import code_length
 
-POWERS_OF_TWO = 2**np.arange(CODE_LENGTH)[::-1]
+
+POWERS_OF_TWO = 2**np.arange(code_length)[::-1]
 
 
 def to_bin(x: int) -> str:
@@ -24,12 +25,12 @@ def to_int(x: str) -> int:
     integer.
 
     Args:
-        x (string): A binary code represented as a string.
+        x (str): A binary code represented as a string.
 
     Returns:
-        int: An integer.
+        int: An integer representing the converted binary code.
     """
-    return int('0b'+x, 2)
+    return int('0b' + x, 2)
 
 
 def complete_zeros(x: str, m: int) -> str:
@@ -43,12 +44,12 @@ def complete_zeros(x: str, m: int) -> str:
         m (int): Size of the final binary code.
 
     Returns:
-        Binary: A binary code
+        str: A binary code with the same length as specified by "m".
     """
-    return '0'*(m - len(x))+x if (m - len(x)) >= 0 else x
+    return '0' * (m - len(x)) + x if (m - len(x)) >= 0 else x
 
 
-def string_to_binary(x: str) -> Binary:
+def string_to_binary(x: str) -> np.ndarray:
     """
     Converts a string to a binary array.
 
@@ -56,12 +57,12 @@ def string_to_binary(x: str) -> Binary:
         x (str): The string to be converted.
 
     Returns:
-        Binary: A binary array representing the input string.
+        np.ndarray: A binary array representing the input string.
     """
     return np.asarray(list(x)).astype(int)
 
 
-def binary_to_int(x: Binary) -> str:
+def binary_to_int(x: np.ndarray) -> str:
     """
     Converts a binary number to its integer representation.
 
@@ -71,10 +72,10 @@ def binary_to_int(x: Binary) -> str:
     Returns:
         str: The integer representation of the binary number.
     """
-    return (POWERS_OF_TWO*x).sum()
+    return (POWERS_OF_TWO * x).sum()
 
 
-def binary_to_string(x: Binary) -> str:
+def binary_to_string(x: np.ndarray) -> str:
     """
     Converts a binary array to a string representation.
 
@@ -87,21 +88,23 @@ def binary_to_string(x: Binary) -> str:
     return ''.join(list(x.astype(str)))
 
 
-def random_selection(distribution: CodeDistribution) -> Binary:
+def random_selection(distribution: CodeDistribution) -> np.ndarray:
     """
     Randomly selects a code from a distribution based on the probability
     of each code.
 
     Args:
         distribution (CodeDistribution): A dictionary where the keys are codes
-        and the values are their probabilities.
+            and the values are their probabilities.
 
     Returns:
-        Binary: The selected code in binary format.
+        np.ndarray: The selected code in binary format.
     """
+    dist_dict = distribution.distribution
+
     x = np.random.uniform()
     cumulative_probability = 0
-    for code in distribution.keys():
-        cumulative_probability += distribution[code]
+    for code in dist_dict.keys():
+        cumulative_probability += dist_dict[code]
         if cumulative_probability >= x:
             return string_to_binary(code)

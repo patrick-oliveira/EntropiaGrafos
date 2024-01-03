@@ -1,15 +1,24 @@
 from typing import Dict, List, NewType, TypedDict
-
+from pydantic import BaseModel
+from pydantic_numpy import NpNDArray
 import matplotlib.axes as ax
 import matplotlib.figure as fig
 import networkx as nx
 import numpy as np
 
+
+class Memory(BaseModel):
+    codes: NpNDArray
+    polarities: NpNDArray
+
+
+class CodeDistribution(BaseModel):
+    distribution: Dict[str, float]
+
+
+
 Graph = NewType('Graph', nx.Graph)
 Array = NewType('Array', np.array)
-Binary = NewType('Binary', str)
-Memory = NewType('Memory', List[Binary])
-CodeDistribution = NewType('CodeDistribution', Dict[Binary, float])
 Weights = NewType('Weights', List[float])
 TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
 

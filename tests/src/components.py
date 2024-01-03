@@ -3,9 +3,9 @@ import numpy as np
 
 from opdynamics.components.memory import (
     initialize_memory,
-    probability_distribution,
-    binary_to_int
+    probability_distribution
 )
+from opdynamics.components.utils import binary_to_int
 
 np.random.seed(42)
 
@@ -30,7 +30,8 @@ class TestProbability(ut.TestCase):
             memory_distribution = probability_distribution(
                 memory = memory,
                 memory_size = 32
-            )
+            ).distribution
+
             probabilities = np.array(list(memory_distribution.values()))
 
             with self.subTest(f"Sanity test for {dist} distribution."):
@@ -52,7 +53,8 @@ class TestProbability(ut.TestCase):
                 memory_distribution = probability_distribution(
                     memory = memory,
                     memory_size = 32
-                )
+                ).distribution
+
                 probabilities = np.array(list(memory_distribution.values()))
                 probs_sum += probabilities
 
@@ -91,7 +93,7 @@ class TestMemory(ut.TestCase):
                     memory_size = self.memory_size,
                     distribution = dist
                 )
-                ints = [binary_to_int(x) for x in memory[0]]
+                ints = [binary_to_int(x) for x in memory.codes]
                 means.append(np.mean(ints))
                 stds.append(np.std(ints))
 
@@ -117,7 +119,7 @@ class TestMemory(ut.TestCase):
                     memory_size = self.memory_size,
                     distribution = dist
                 )
-                means.append(np.mean(memory[1]))
+                means.append(np.mean(memory.polarities))
 
             with self.subTest(f"Polarity mean for {dist} distribution."):
                 self.assertAlmostEqual(

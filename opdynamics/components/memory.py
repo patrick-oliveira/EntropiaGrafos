@@ -1,28 +1,49 @@
-from copy import deepcopy
-
 import numpy as np
 
+from copy import deepcopy
 from opdynamics import code_length
 from opdynamics.math.polarity import polarity
-from opdynamics.utils.types import Binary, CodeDistribution, Memory
+from opdynamics.utils.types import CodeDistribution, Memory
+from opdynamics.components.utils import (
+    complete_zeros,
+    to_bin,
+    string_to_binary,
+    binary_to_string,
+    POWERS_OF_TWO
+)
 
 
 def initialize_memory(
     memory_size: int,
     distribution: str = "binomial",
     *args,
-    **kwargs    
+    **kwargs
 ) -> Memory:
     """
-    Create a list of size "mu" of random binary codes of an specified, fixed length, taken from a binomial distribution.
+    Create a list of size "mu" of random binary codes of an specified,
+    fixed length, taken from a binomial distribution.
     The parameters are defined by the model.
-    
+
     Returns:
-        Memory: A tuple containing a numpy array of binary codes and it's corresponding polarities.
-    """   
-    code_array = get_binary_codes(memory_size, code_length, distribution, *args, **kwargs)
-    polarity_array = polarity(code_array)
-    return [code_array, polarity_array]
+        Memory: A tuple containing a numpy array of binary codes and it's
+        corresponding polarities.
+    """
+    code_array = get_binary_codes(
+        mu = memory_size,
+        m = code_length,
+        distribution = distribution,
+        *args,
+        **kwargs
+    )
+    polarity_array = polarity(x = code_array)
+
+    memory = Memory(
+        codes = code_array,
+        polarities = polarity_array
+    )
+
+    return memory
+
 
 def get_binary_codes(
     mu: int,
@@ -30,30 +51,54 @@ def get_binary_codes(
     distribution: str = "binomial",
     *args,
     **kwargs
-) -> Memory:
+) -> np.ndarray:
     """
-    Return a list of size "mu" of random binary codes of length "m" taken from a Binomial distribution of parameters (2**m, 0.5). 
+    Return a list of size "mu" of random binary codes of length "m" taken from
+    a specified distribution.
 
     Args:
         mu (int): Number of binary codes to be generated.
         m (int): Code's length.
+        distribution (str, optional): Distribution to sample from.
+            Supported distributions are "binomial", "poisson", and "from_list".
+            Defaults to "binomial".
+        *args: Additional positional arguments.
+        **kwargs: Additional keyword arguments.
 
     Returns:
-        Memory: A np.array of binary codes.
+        np.ndarray: An array of binary codes.
+
+    Raises:
+        AssertionError: If the specified distribution requires additional
+        arguments and they are not provided.
+
+    Examples:
+        >>> get_binary_codes(10, 5)
+        array([[1, 0, 1, 0, 1],
+               [0, 1, 0, 1, 1],
+               [1, 1, 0, 0, 1],
+               [0, 0, 1, 1, 0],
+               [1, 1, 1, 0, 0],
+               [0, 1, 1, 1, 0],
+               [1, 0, 0, 1, 0],
+               [1, 0, 1, 1, 1],
+               [0, 1, 0, 0, 0],
+               [1, 0, 0, 0, 1]])
+
     """
     if distribution == "binomial":
-        code_list = [generate_code(a, m) for a in np.random.binomial(2**m, 0.5, size=mu)] if mu != None else \
-                    [generate_code(np.random.binomial(2**m, 0.5), m)]
+        numbers = np.random.binomial(2**m, 0.5, size=mu)
     elif distribution == "poisson":
-        lam = kwargs["lam"] if "lam" in kwargs.keys() else 1
-        code_list = [generate_code(a, m) for a in np.random.poisson(lam, size=mu)] if mu != None else \
-                    [generate_code(np.random.poisson(lam), m)]
-
+        assert "lam" in kwargs.keys(), (
+            "You must provide a lambda value if 'distribution' is 'poisson'."
+        )
+        lam = kwargs["lam"]
+        numbers = np.random.poisson(lam, size=mu)
     elif distribution == "from_list":
-        assert "base_list" in kwargs.keys(), \
-            ("You must provide a list of integers to sample from if "
-             "'distribution' is 'from_list'.")
-
+        assert "base_list" in kwargs.keys(), (
+            "You must provide a list of integers to sample from if "
+            "'distribution' is 'from_list'."
+        )
         base_info_list = kwargs["base_list"]
         probabilities = np.linspace(0, 1, len(base_info_list) + 1)[1:]
 
@@ -61,183 +106,105 @@ def get_binary_codes(
             for k in range(len(probabilities)):
                 if p <= probabilities[k]:
                     return base_info_list[k]
-        integers = np.random.uniform(0, 1, size=mu)
-        integers = [f(x) for x in integers]
 
-        code_list = [generate_code(a, m) for a in integers] if mu is not None \
-            else [generate_code(integers[0], m)]
+        numbers = np.random.uniform(0, 1, size=mu)
+        numbers = [f(x) for x in numbers]
 
+    code_list = [generate_code(a, m) for a in numbers]
     code_array = np.asarray(code_list)
+
     return code_array
-           
-def generate_code(x: int, m: int) -> Binary:
-    """Generate a binary code of length "m" for a given integer "x".
+
+
+def generate_code(x: int, m: int) -> np.ndarray:
+    """
+    Generate a binary code of length "m" for a given integer "x".
 
     Args:
         x (int): An integer.
-        m (int): Size of the binary code (for standartization).
+        m (int): Size of the binary code (for standardization).
 
     Returns:
-        Binary: A binary code.
-    """         
+        np.ndarray: A binary code.
+    """
     code = complete_zeros(to_bin(x), m)
     code = string_to_binary(code)
     return code
 
 
-def to_bin(x: int) -> str:
-    """Return the binary code of an integer "x" represented as a string, without prefix.
-
-    Args:
-        x (int): An integer.
-
-    Returns:
-        str: A binary code represented as a string.
-    """
-    return bin(x)[2:]
-
-def to_int(x: str) -> int:
-    """
-    Convert the binary code "x" represented as a string to its correspondent integer.
-
-    Args:
-        x (string): A binary code represented as a string.
-
-    Returns:
-        int: An integer.
-    """ 
-    return int('0b'+x, 2)
-
-def complete_zeros(x: str, m: int) -> str:
-    """
-    Complete the number of bits in "x" with zeroes. 
-    This procedure may be necessary in order to create a list of binary codes with the same length.
-
-    Args:
-        x (str): A binary code.
-        m (int): Size of the final binary code.
-
-    Returns:
-        Binary: A binary code
-    """
-    return '0'*(m - len(x))+x if (m - len(x)) >= 0 else \
-           x
-
-def binary_to_int(x: Binary) -> str:
-    return (powers_of_two*x).sum()
-
-def string_to_binary(x: str) -> Binary:
-    return np.asarray(list(x)).astype(int)
-
-def binary_to_string(x: Binary) -> str:
-    return ''.join(list(x.astype(str)))
-
-def probability_distribution(memory: Memory, memory_size: int) -> CodeDistribution:
+def probability_distribution(
+    memory: Memory,
+    memory_size: int
+) -> CodeDistribution:
     """
     Return a probability distribution defined over a list of binary codes.
 
     Args:
-        memory (Memory): A Memory object (array of binary codes and its polarities)
+        memory (Memory): A Memory object (array of binary codes and its
+        polarities)
+        memory_size (int): The size of the memory (number of codes)
 
     Returns:
-        CodeDistribution: An numpy array with probabilities for each code (identified by its integer value - array index).
-    """   
+        CodeDistribution: An numpy array with probabilities for each code
+        (identified by its integer value - array index).
+    """
+    codes = memory.codes
     probability_distribution = np.zeros(2**code_length)
-    integers = np.matmul(memory[0], powers_of_two)
+
+    integers = np.matmul(codes, POWERS_OF_TWO)
+
     for code in integers:
         probability_distribution[code] += 1
-        
     probability_distribution /= memory_size
-    prob = {code:probability_distribution[k] for k, code in enumerate(_A.keys())}
-    return prob
-    # unique_codes, num_ocurrencies = np.unique(memory[0], axis = 0, return_counts = True)
-    # incomplete_probability_distribution = {binary_to_string(code) : num/memory_size  for code, num in zip(unique_codes, num_ocurrencies)}
-    # complete_dist = complete_probability_distribution(incomplete_probability_distribution)
-    # # return np.asarray(list(complete_dist.values()))
-    # return complete_dist
+
+    code_distribution = CodeDistribution(
+        distribution = {
+            code: probability_distribution[k]
+            for k, code in enumerate(_A.keys())
+        }
+    )
+
+    return code_distribution
 
 
-def complete_probability_distribution(incomplete_distribution: CodeDistribution) -> CodeDistribution:
+def complete_probability_distribution(
+    incomplete_distribution: CodeDistribution
+) -> CodeDistribution:
     """
-    Receives a probability distribution of an individual's memory. The memory may or may not countain all the possible informations of the Alphabet, 
-    hence this function creates another dictionary with all codes from the Alphabet and attributes the correct probabilities from the individual's distribution.
+    Receives a probability distribution of an individual's memory. The memory
+    may or may not contain all the possible information of the Alphabet,
+    hence this function creates another dictionary with all codes from the
+    Alphabet and attributes the correct probabilities from the individual's
+    distribution.
 
     Args:
-        incomplete_distribution (CodeDistribution): A probability distribution of an individual's memory that may be incomplete.
+        incomplete_distribution (CodeDistribution): A probability distribution
+        of an individual's memory that may be incomplete.
 
     Returns:
-        CodeDistribution: An extension of the initial distribution including all the possible codes from the Alphabet.
-    """    
+        CodeDistribution: An extension of the initial distribution including
+        all the possible codes from the Alphabet.
+    """
     new_A = deepcopy(_A)
-    
-    for code in incomplete_distribution:
-        new_A[code] = incomplete_distribution[code]
-    
-    return new_A  
 
-def random_selection(distribution: CodeDistribution) -> Binary:
-    '''
-    Input:
-        distribution: A probability distribution over a list of binary codes.
-        
-    Select randomly a binary code from a given distribution.
-    '''
-    x = np.random.uniform()
-    cumulative_probability = 0
-    for code in distribution.keys():
-        cumulative_probability += distribution[code]
-        if cumulative_probability >= x:
-            return string_to_binary(code)
+    distribution = incomplete_distribution.distribution
 
-# def random_selection(distribution):
-#     '''
-#     Input:
-#         distribution: A probability distribution over a list of binary codes.
-        
-#     Select randomly a binary code from a given distribution.
-#     '''
-#     x = np.random.uniform()
-#     distribution = list(distribution.values())
-#     cumulative_probability = 0
-#     for code in A.keys():
-#         cumulative_probability += distribution[code]
-#         if cumulative_probability >= x:
-#             return A[code]
+    for code in distribution:
+        new_A[code] = distribution[code]
 
-# def probability_distribution(memory: Memory) -> CodeDistribution:
-#     """
-#     Return a probability distribution defined over a list of binary codes.
+    new_distribution = CodeDistribution(
+        distribution = new_A
+    )
 
-#     Args:
-#         memory (Memory): A Memory object (array of binary codes and its polarities)
+    return new_distribution
 
-#     Returns:
-#         CodeDistribution: An numpy array with probabilities for each code (identified by its integer value - array index).
-#     """    
-#     probability_distribution = np.zeros(2**code_length)
-#     integers = np.matmul(memory[0], powers_of_two)
-    
-#     for code in integers:
-#         probability_distribution[code] += 1
-        
-#     probability_distribution /= memory_size
-        
-#     return probability_distribution
 
-# def random_selection(distribution: CodeDistribution) -> Binary:
-#     '''
-#     Input:
-#         distribution: A probability distribution over a list of binary codes.
-        
-#     Select randomly a binary code from a given distribution.
-#     '''
-#     x = np.random.uniform()
-#     cumulative_probability = 0
-#     for n in A.keys():
-#         cumulative_probability += distribution[n]
-#         if cumulative_probability >= x:
-#             return A[n]
-        
-powers_of_two = 2**np.arange(code_length)[::-1]        
-A = {n:generate_code(n, code_length) for n in range(2**code_length)}           # Alphabet (work on that later)
-_A = {binary_to_string(generate_code(n, code_length)):generate_code(n, code_length) for n in range(2**code_length)}            # Alphabet (work on that later)
+A = {n: generate_code(n, code_length) for n in range(2**code_length)}
+
+_A = {
+    binary_to_string(generate_code(n, code_length)): generate_code(
+        n,
+        code_length
+    )
+    for n in range(2**code_length)
+}
