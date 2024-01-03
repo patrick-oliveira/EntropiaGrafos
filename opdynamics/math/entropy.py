@@ -1,7 +1,7 @@
 import numpy as np
 
 from functools import partial
-from opdynamics.utils.types import Binary, CodeDistribution
+from opdynamics.utils.types import CodeDistribution
 
 
 def shannon_entropy(P: np.ndarray) -> float:
@@ -30,7 +30,9 @@ def memory_entropy(distribution: CodeDistribution) -> float:
         float: The memory entropy value.
 
     """
-    P = np.asarray(list(distribution.values()))
+    dist_dict = distribution.distribution
+
+    P = np.asarray(list(dist_dict.values()))
     return shannon_entropy(P)
 
 
@@ -47,7 +49,13 @@ def JSD(Pu: CodeDistribution, Pv: CodeDistribution) -> float:
         float: The JSD value.
 
     """
-    M = {code: (Pu[code] + Pv[code]) / 2 for code in Pu}
+
+    M = CodeDistribution(
+        distribution = {
+            code: (Pu.distribution[code] + Pv.distribution[code]) / 2
+            for code in Pu.distribution.keys()
+        }
+    )
 
     return memory_entropy(M) - (memory_entropy(Pu) + memory_entropy(Pv)) / 2
 
@@ -81,7 +89,7 @@ def D(P: CodeDistribution, Q: CodeDistribution) -> float:
     return sum(map(partial(_D, P, Q), P.keys()))
 
 
-def _D(P: CodeDistribution, Q: CodeDistribution, x: Binary):
+def _D(P: CodeDistribution, Q: CodeDistribution, x: str):
     """
     Calculate the Kullback-Leibler divergence between two code distributions P
     and Q for a given binary value x.
@@ -89,16 +97,18 @@ def _D(P: CodeDistribution, Q: CodeDistribution, x: Binary):
     Parameters:
     P (CodeDistribution): The first code distribution.
     Q (CodeDistribution): The second code distribution.
-    x (Binary): The binary value.
+    x (str): The binary value.
 
     Returns:
     float: The Kullback-Leibler divergence between P and Q for the given
     binary value x.
     """
-    if P[x] == 0:
+    if P.distribution[x] == 0:
         return 0
     else:
-        if Q[x] == 0:
+        if Q.distribution[x] == 0:
             return np.inf
         else:
-            return P[x] * np.log2(P[x] / Q[x])
+            a = P.distribution[x]
+            b = np.log2(P.distribution[x] / Q.distribution[x])
+            return a * b
