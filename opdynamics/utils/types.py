@@ -16,6 +16,7 @@ class CodeDistribution(BaseModel):
     distribution: Dict[str, float]
 
 
+Binary = str
 
 Graph = NewType('Graph', nx.Graph)
 Array = NewType('Array', np.array)
