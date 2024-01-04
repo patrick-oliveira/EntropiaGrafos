@@ -14,7 +14,7 @@
     },
     "general_params": {
         "T": 1000,
-        "num_repetitions": 2000,
+        "num_repetitions": 100,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/single_polarized_group/"
