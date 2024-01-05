@@ -152,6 +152,13 @@ class TestIndividual(ut.TestCase):
             }
         }
 
+        self.expected_selection_stats = {
+            "binomial": {
+                "mean": 16,
+                "std": 2.5
+            }
+        }
+
     def test_individual_stats(self):
         for dist in self.distributions:
             Hs = []
@@ -203,5 +210,38 @@ class TestIndividual(ut.TestCase):
                 self.assertAlmostEqual(
                     np.round(Pi_std, 2),
                     expected_Pi_std,
+                    places=1
+                )
+
+    def test_individual_information_selection(self):
+        for dist in self.distributions:
+            ind = Individual(
+                kappa = self.kappa,
+                memory_size = self.memory_size,
+                distribution = dist
+            )
+
+            Ns = []
+            for _ in range(10**5):
+                x = binary_to_int(ind.X)
+                Ns.append(x)
+
+            N_mean = np.mean(Ns)
+            N_std = np.std(Ns)
+            expected_N_mean = self.expected_selection_stats[dist]["mean"]
+            expected_N_std = self.expected_selection_stats[dist]["std"]
+
+            with self.subTest(
+                f"Individual mean selected info. Initial distribution: {dist}"
+            ):
+                self.assertAlmostEqual(
+                    np.round(N_mean, 1),
+                    expected_N_mean,
+                    places=1
+                )
+
+                self.assertAlmostEqual(
+                    np.round(N_std, 2),
+                    expected_N_std,
                     places=1
                 )
