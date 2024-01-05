@@ -50,6 +50,10 @@ class Individual:
         return self._H
 
     @property
+    def pi(self):
+        return self._pi
+
+    @property
     def delta(self):
         return self._delta
 
@@ -85,10 +89,6 @@ class Individual:
         Updates the probability of distortion due to imperfect memory..
         """
         self._delta = 1 / (np.exp(self.kappa * (max_H - self.H) / max_H) + 1)
-
-    @property
-    def pi(self):
-        return self._pi
 
     def compute_polarization(self):
         self._pi = self.L.polarities.mean()
