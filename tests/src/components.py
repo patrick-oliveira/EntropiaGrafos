@@ -6,6 +6,7 @@ from opdynamics.components.memory import (
     probability_distribution
 )
 from opdynamics.components.utils import binary_to_int
+from opdynamics.components.individual import Individual
 
 np.random.seed(42)
 
@@ -125,5 +126,82 @@ class TestMemory(ut.TestCase):
                 self.assertAlmostEqual(
                     np.round(np.mean(means), 2),
                     self.expected_polarity_mean[dist],
+                    places=1
+                )
+
+
+class TestIndividual(ut.TestCase):
+    distributions = [
+        "binomial"
+    ]
+    kappa = 0
+    memory_size = 32
+
+    def setUp(self):
+        self.expected_entropy = {
+            "binomial": {
+                "mean": 3.2,
+                "std": 0.18
+            }
+        }
+
+        self.expected_polarity = {
+            "binomiial": {
+                "mean": 0.5,
+                "std": 0.03
+            }
+        }
+
+    def test_individual_stats(self):
+        for dist in self.distributions:
+            Hs = []
+            Pis = []
+
+            for _ in range(10**5):
+                ind = Individual(
+                    kappa = self.kappa,
+                    memory_size = self.memory_size,
+                    distribution = dist
+                )
+                Hs.append(ind.H)
+                Pis.append(ind.pi)
+
+            H_mean = np.mean(Hs)
+            H_std = np.std(Hs)
+            expected_H_mean = self.expected_entropy[dist]["mean"]
+            expected_H_std = self.expected_entropy[dist]["std"]
+
+            Pi_mean = np.mean(Pis)
+            Pi_std = np.std(Pis)
+            expected_Pi_mean = self.expected_polarity[dist]["mean"]
+            expected_Pi_std = self.expected_polarity[dist]["std"]
+
+            with self.subTest(
+                f"Individual mean entropy. Initial distribution: {dist}"
+            ):
+                self.assertAlmostEqual(
+                    np.round(H_mean, 1),
+                    expected_H_mean,
+                    places=1
+                )
+
+                self.assertAlmostEqual(
+                    np.round(H_std, 2),
+                    expected_H_std,
+                    places=1
+                )
+
+            with self.subTest(
+                f"Individual mean polarity. Initial distribution: {dist}"
+            ):
+                self.assertAlmostEqual(
+                    np.round(Pi_mean, 2),
+                    expected_Pi_mean,
+                    places=1
+                )
+
+                self.assertAlmostEqual(
+                    np.round(Pi_std, 2),
+                    expected_Pi_std,
                     places=1
                 )

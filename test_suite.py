@@ -1,15 +1,11 @@
 import unittest as ut
-from tests.src.math import TestPolarity
-from tests.src.components import TestComponents
-from tests.src.dynamics import TestDynamics
-from tests.src.model import TestModel
+from tests.src.math import TestEntropy
+from tests.src.components import TestProbability, TestMemory
 
 if __name__ == "__main__":
     suite = ut.TestSuite()
-    suite.addTest(ut.makeSuite(TestPolarity))
-    suite.addTest(ut.makeSuite(TestComponents))
-    suite.addTest(ut.makeSuite(TestDynamics))
-    suite.addTest(ut.makeSuite(TestModel))
-
+    suite.addTest(ut.TestLoader().loadTestsFromTestCase(TestEntropy))
+    suite.addTest(ut.TestLoader().loadTestsFromTestCase(TestProbability))
+    suite.addTest(ut.TestLoader().loadTestsFromTestCase(TestMemory))
     r = ut.TextTestRunner()
     r.run(suite)
