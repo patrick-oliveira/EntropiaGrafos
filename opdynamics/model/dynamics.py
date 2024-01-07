@@ -6,7 +6,7 @@ from opdynamics.math.entropy import JSD
 from opdynamics.utils.types import Binary, Graph, TransitionProbabilities
 
 np.random.seed(seed)
-    
+
 def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
     """
     Function which decides wether or not the incoming information will be accepted. If refused, return "None"
@@ -17,8 +17,8 @@ def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
 
     Returns:
         [Binary]: The incoming binary code, if accepted, otherwise "None".
-    """   
-    return code if (np.random.uniform() <= acceptance_probability) else None   
+    """
+    return code if (np.random.uniform() <= acceptance_probability) else None
 
 def get_transition_probabilities(ind: Individual, tendency:str = None) -> TransitionProbabilities:
     """
@@ -30,7 +30,7 @@ def get_transition_probabilities(ind: Individual, tendency:str = None) -> Transi
 
     Returns:
         TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
-    """    
+    """
     return {0: ind.delta + ind.xi, 1: ind.delta} if tendency == 1 else \
            {0: ind.delta, 1: ind.delta + ind.xi} if tendency == -1 else \
            {0: ind.delta, 1: ind.delta}
@@ -45,10 +45,10 @@ def distort(code: Binary, transition_probability: TransitionProbabilities) -> Bi
 
     Returns:
         Binary: A possibily bitwise distorted code.
-    """ 
+    """
     for k in range(len(code)):
         code[k] = mutate(code[k], transition_probability)
-        
+
     return code
 
 def mutate(bit: int, transition_probability: TransitionProbabilities) -> Binary:
@@ -69,13 +69,13 @@ def proximity(u: Individual, v:Individual) -> float:
 
     Returns:
         float: The Jensen-Shannon Divergence JSD(Pu, Pv), where Pu and Pv are the memory's probability distribution of individuals u and v, respectively.
-    """    
+    """
     return 1 - JSD(u.P, v.P)
 
 def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     """
     Return the probability that an individual "u" will accept and information given by "v".
-    
+
     ==>> Write the latex formula here. <<==
 
     Args:
@@ -87,11 +87,11 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     Returns:
         float: The acceptance probability for u of informations given by v.
     """
-    
+
     max_sigma = max(
         set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))])
     )
-    
+
     sigma_ratio =(G.degree[v]**gamma)/max_sigma
     return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
 

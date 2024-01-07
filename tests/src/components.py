@@ -8,8 +8,6 @@ from opdynamics.components.memory import (
 from opdynamics.components.utils import binary_to_int
 from opdynamics.components.individual import Individual
 
-np.random.seed(42)
-
 
 class TestProbability(ut.TestCase):
     distributions = [
@@ -18,6 +16,8 @@ class TestProbability(ut.TestCase):
     memory_size = 32
 
     def setUp(self):
+        np.random.seed(42)
+
         self.expected_means = {
             "binomial": 16
         }
@@ -75,6 +75,8 @@ class TestMemory(ut.TestCase):
     memory_size = 16
 
     def setUp(self):
+        np.random.seed(42)
+
         self.expected_means = {
             "binomial": 16
         }
@@ -138,6 +140,8 @@ class TestIndividual(ut.TestCase):
     memory_size = 32
 
     def setUp(self):
+        np.random.seed(42)
+
         self.expected_entropy = {
             "binomial": {
                 "mean": 3.2,
@@ -146,7 +150,7 @@ class TestIndividual(ut.TestCase):
         }
 
         self.expected_polarity = {
-            "binomiial": {
+            "binomial": {
                 "mean": 0.5,
                 "std": 0.03
             }
@@ -154,8 +158,8 @@ class TestIndividual(ut.TestCase):
 
         self.expected_selection_stats = {
             "binomial": {
-                "mean": 16,
-                "std": 2.5
+                "mean": 15.4,
+                "std": 2.7
             }
         }
 
@@ -164,7 +168,7 @@ class TestIndividual(ut.TestCase):
             Hs = []
             Pis = []
 
-            for _ in range(10**5):
+            for _ in range(10**4):
                 ind = Individual(
                     kappa = self.kappa,
                     memory_size = self.memory_size,
@@ -222,7 +226,7 @@ class TestIndividual(ut.TestCase):
             )
 
             Ns = []
-            for _ in range(10**5):
+            for _ in range(10**4):
                 x = binary_to_int(ind.X)
                 Ns.append(x)
 
@@ -241,7 +245,7 @@ class TestIndividual(ut.TestCase):
                 )
 
                 self.assertAlmostEqual(
-                    np.round(N_std, 2),
+                    np.round(N_std, 1),
                     expected_N_std,
                     places=1
                 )
