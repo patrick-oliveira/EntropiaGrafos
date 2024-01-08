@@ -73,18 +73,28 @@ class TestMemory(ut.TestCase):
         "binomial"
     ]
     memory_size = 16
+    memory_params = {
+        "binomial": {},
+        "from_list": {
+            "base_list": [0, 5, 10]
+        },
+        "poisson": {}
+    }
 
     def setUp(self):
         np.random.seed(42)
 
         self.expected_means = {
-            "binomial": 16
+            "binomial": 16,
+            "from_list": 5.0
         }
         self.expected_stds = {
-            "binomial": 2.7
+            "binomial": 2.7,
+            "from_list": 4.1,
         }
         self.expected_polarity_mean = {
-            "binomial": 0.5
+            "binomial": 0.5,
+            "from_list": 0.3
         }
 
     def test_initialized_memory_dist(self):
@@ -94,7 +104,8 @@ class TestMemory(ut.TestCase):
             for _ in range(10**4):
                 memory = initialize_memory(
                     memory_size = self.memory_size,
-                    distribution = dist
+                    distribution = dist,
+                    **self.memory_params[dist]
                 )
                 ints = [binary_to_int(x) for x in memory.codes]
                 means.append(np.mean(ints))
