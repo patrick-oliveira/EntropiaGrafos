@@ -6,7 +6,8 @@ from opdynamics.model.model import Model
 
 class TestModel(ut.TestCase):
     distributions = [
-        "binomial"
+        "binomial",
+        "from_list"
     ]
 
     def setUp(self):
@@ -24,6 +25,21 @@ class TestModel(ut.TestCase):
                 "gamma": 0,
                 "preferential_attachment": 2,
                 "polarization_grouping_type": 0
+            },
+            "from_list": {
+                "graph_type": "barabasi",
+                "network_size": 500,
+                "memory_size": 128,
+                "code_length": 5,
+                "kappa": 0,
+                "lambd": 0,
+                "alpha": 0,
+                "omega": 0,
+                "gamma": 0,
+                "preferential_attachment": 2,
+                "polarization_grouping_type": 0,
+                "distribution": "from_list",
+                "base_list": [0, 5, 10]
             }
         }
 
@@ -32,12 +48,17 @@ class TestModel(ut.TestCase):
                 "entropy": 3.5,
                 "proximity": 1.0,
                 "polarity": 0.5
+            },
+            "from_list": {
+                "entropy": 1.6,
+                "proximity": 1.0,
+                "polarity": 0.3
             }
         }
 
     def test_model_instantiation(self):
         for dist in self.distributions:
-            model = Model(**self.model_params["binomial"])
+            model = Model(**self.model_params[dist])
 
             model_H = np.round(model.H, 1)
             model_S = np.round(model.J, 1)

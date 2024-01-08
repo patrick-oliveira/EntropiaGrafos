@@ -72,7 +72,7 @@ class TestMemory(ut.TestCase):
     distributions = [
         "binomial"
     ]
-    memory_size = 16
+    memory_size = 128
     memory_params = {
         "binomial": {},
         "from_list": {
@@ -89,7 +89,7 @@ class TestMemory(ut.TestCase):
             "from_list": 5.0
         }
         self.expected_stds = {
-            "binomial": 2.7,
+            "binomial": 2.8,
             "from_list": 4.1,
         }
         self.expected_polarity_mean = {
@@ -145,18 +145,30 @@ class TestMemory(ut.TestCase):
 
 class TestIndividual(ut.TestCase):
     distributions = [
-        "binomial"
+        "binomial",
+        "from_list"
     ]
     kappa = 0
-    memory_size = 32
+    memory_size = 256
+    memory_params = {
+        "binomial": {},
+        "from_list": {
+            "base_list": [0, 5, 10]
+        },
+        "poisson": {}
+    }
 
     def setUp(self):
         np.random.seed(42)
 
         self.expected_entropy = {
             "binomial": {
-                "mean": 3.2,
-                "std": 0.18
+                "mean": 3.5,
+                "std": 0.06
+            },
+            "from_list": {
+                "mean": 1.6,
+                "std": 0.01
             }
         }
 
@@ -164,13 +176,21 @@ class TestIndividual(ut.TestCase):
             "binomial": {
                 "mean": 0.5,
                 "std": 0.03
+            },
+            "from_list": {
+                "mean": 0.3,
+                "std": 0.01
             }
         }
 
         self.expected_selection_stats = {
             "binomial": {
-                "mean": 15.4,
-                "std": 2.7
+                "mean": 15.8,
+                "std": 2.8
+            },
+            "from_list": {
+                "mean": 5.3,
+                "std": 4.1
             }
         }
 
@@ -183,7 +203,8 @@ class TestIndividual(ut.TestCase):
                 ind = Individual(
                     kappa = self.kappa,
                     memory_size = self.memory_size,
-                    distribution = dist
+                    distribution = dist,
+                    **self.memory_params[dist]
                 )
                 Hs.append(ind.H)
                 Pis.append(ind.pi)
@@ -207,6 +228,9 @@ class TestIndividual(ut.TestCase):
                     places=1
                 )
 
+            with self.subTest(
+                f"Individual entropy std. Initial distribution: {dist}"
+            ):
                 self.assertAlmostEqual(
                     np.round(H_std, 2),
                     expected_H_std,
@@ -222,6 +246,9 @@ class TestIndividual(ut.TestCase):
                     places=1
                 )
 
+            with self.subTest(
+                f"Individual polarity std. Initial distribution: {dist}"
+            ):
                 self.assertAlmostEqual(
                     np.round(Pi_std, 2),
                     expected_Pi_std,
@@ -233,7 +260,8 @@ class TestIndividual(ut.TestCase):
             ind = Individual(
                 kappa = self.kappa,
                 memory_size = self.memory_size,
-                distribution = dist
+                distribution = dist,
+                **self.memory_params[dist]
             )
 
             Ns = []
@@ -255,6 +283,9 @@ class TestIndividual(ut.TestCase):
                     places=1
                 )
 
+            with self.subTest(
+                f"Individual selected info std. Initial distribution: {dist}"
+            ):
                 self.assertAlmostEqual(
                     np.round(N_std, 1),
                     expected_N_std,
