@@ -4,9 +4,13 @@ import pandas as pd
 
 from typing import List
 from opdynamics.utils.reading_tools import get_runs_paths, make_tuple
-from opdynamics.utils.types import Parameters, SimulationResult
+from opdynamics.utils.types import SimulationParameters, SimulationResult
 
-def get_param_mean_data(params: Parameters, results_path: str) -> SimulationResult:
+
+def get_param_mean_data(
+    params: SimulationParameters,
+    results_path: str
+) -> SimulationResult:
     runs = get_runs_paths(params, results_path)
     T = len(pickle.load(open(runs[0], "rb"))['Entropy'])
     num_runs = len(runs)
@@ -18,31 +22,41 @@ def get_param_mean_data(params: Parameters, results_path: str) -> SimulationResu
     acceptances   = []
     transmissions = []
 
-
     for run in runs:
         run_data = pickle.load(open(run, "rb"))
-        
+
         entropy      += run_data['Entropy']
         proximity    += run_data["Proximity"]
         polarity     += run_data["Polarity"]
         distribution += np.array(run_data["Distribution"]).T
-        
-        a = pd.DataFrame(run_data["Acceptance"][-1], columns = ["acceptances", 'degree'])
+
+        a = pd.DataFrame(
+            run_data["Acceptance"][-1],
+            columns = ["acceptances", 'degree']
+        )
         acceptances.append(a)
-        
-        t = pd.DataFrame(run_data["Transmission"][-1], columns = ['transmissions', 'degree'])
+
+        t = pd.DataFrame(
+            run_data["Transmission"][-1],
+            columns = ['transmissions', 'degree']
+        )
         transmissions.append(t)
-        
+
     entropy      /= num_runs
     proximity    /= num_runs
     polarity     /= num_runs
     distribution /= num_runs
-        
-    acceptances = pd.concat(acceptances, ignore_index = True).groupby(by = "degree").agg('mean')
+
+    acceptances = pd.concat(
+        acceptances,
+        ignore_index = True
+    ).groupby(by = "degree").agg('mean')
     acceptances['acceptances'] = acceptances['acceptances'].astype(int)
     acceptances = acceptances.to_dict()["acceptances"]
 
-    transmissions = pd.concat(transmissions, ignore_index = True).groupby(by = "degree").agg('mean')
+    transmissions = pd.concat(
+        transmissions, ignore_index = True
+    ).groupby(by = "degree").agg('mean')
     transmissions['transmissions'] = transmissions['transmissions'].astype(int)
     transmissions = transmissions.to_dict()['transmissions']
 
@@ -54,8 +68,15 @@ def get_param_mean_data(params: Parameters, results_path: str) -> SimulationResu
         "acceptances": acceptances,
         "transmissions": transmissions
     }
-    
+
     return mean_stats
 
-def get_experiment_mean_data(param_list: List[Parameters], results_path: str) -> dict[SimulationResult]:
-    return {make_tuple(params): get_param_mean_data(params, results_path) for params in param_list}
+
+def get_experiment_mean_data(
+    param_list: List[SimulationParameters],
+    results_path: str
+) -> dict[SimulationResult]:
+    return {
+        make_tuple(params, True): get_param_mean_data(params, results_path)
+        for params in param_list
+    }
