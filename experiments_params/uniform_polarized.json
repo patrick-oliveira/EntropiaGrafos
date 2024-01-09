@@ -10,11 +10,15 @@
         "omega": [0],
         "gamma": [0],
         "preferential_attachment": [2],
-        "polarization_type": [0]
+        "polarization_type": [0],
+        "distribution": ["from_list"],
+        "base_list": [
+            [25, 27, 30]
+        ]
     },
     "general_params": {
         "T": 1500,
-        "num_repetitions": 5,
+        "num_repetitions": 3,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/uniform_polarized/"

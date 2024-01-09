@@ -5,8 +5,9 @@ from itertools import product
 from pathlib import Path
 from numpy import ndarray
 from typing import Dict, List
-from opdynamics.utils.types import (ExperimentParameters,
-                                    Parameters)
+from opdynamics.utils.types import (
+    Parameters
+)
 
 
 def save_simulation_stats(
@@ -66,9 +67,11 @@ def check_convergence(
         + f"polarity = {polarity_error:.8f}"
     )
 
-    converged = (entropy_error < epsilon and
-                 proximity_error < epsilon and
-                 polarity_error < epsilon)
+    converged = (
+        entropy_error < epsilon
+        and proximity_error < epsilon
+        and polarity_error < epsilon
+    )
 
     return converged
 
@@ -95,11 +98,7 @@ def param_to_hash(params: tuple) -> str:
     Transforms the list of parameters values into a hash string.
 
     Parameters:
-<<<<<<< HEAD
         params (tuple): The dictionary containing the
-=======
-        params (Dict[str, str | float | int]): The dictionary containing the
->>>>>>> 36b10b161e5083e6a0554d131dd0984d105fe07e
         parameter values. The params must be the _simulation_params_
         dictionary, not including the general params (T, num_repetitions,
         early_stop, epsilon, and results_path)
@@ -128,26 +127,14 @@ def validate_params(params: dict) -> bool:
     return True
 
 
-def build_param_list(input_params: ExperimentParameters) -> List[Parameters]:
-    """
-    Builds a list of parameter dictionaries for simulation.
+def build_param_list(input_params: dict) -> List[Parameters]:
+    general_params = input_params["general_params"]
+    simulation_params = input_params['simulation_params']
 
-    Args:
-        input_params (ExperimentParameters): The input parameters for the
-        experiment.
-
-    Returns:
-        List[Parameters]: A list of parameter dictionaries for simulation.
-
-    """
-    # get the experiment parameters sub-dictionaries
-    simulation_params = input_params["simulation_parameters"]
-    general_params = input_params["general_parameters"]
-
-    simulation_params_keys = simulation_params.keys()
-    # get all combinations of the simulation parameters
+    simulation_params_keys = input_params['simulation_params'].keys()
+    # Get all combinations of parameters
     simulation_params = list(product(*simulation_params.values()))
-    # build a dictionary for each combination of parameters
+    # Build a list of dictionaries with the keys of the original parameters
     simulation_params = list(map(
         lambda param_tuple: {
             k: val
@@ -155,7 +142,7 @@ def build_param_list(input_params: ExperimentParameters) -> List[Parameters]:
         },
         simulation_params
     ))
-    # remove invalid combinations, e.g. alpha + omega > 1
+    # Add the general parameters to each valid dictionary
     simulation_params = [
         {
             "simulation_parameters": x,
@@ -164,3 +151,7 @@ def build_param_list(input_params: ExperimentParameters) -> List[Parameters]:
     ]
 
     return simulation_params
+
+
+def get_param_tuple(params: Parameters) -> tuple:
+    return tuple(params["simulation_parameters"].values())

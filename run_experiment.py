@@ -3,7 +3,8 @@ import json
 import random
 import multiprocessing as mp
 
-from opdynamics.simulation.experimentation import build_param_list, worker
+from opdynamics.simulation.experimentation import worker
+from opdynamics.simulation.utils import build_param_list
 from opdynamics.utils.tools import split_list
 
 parser = argparse.ArgumentParser()
