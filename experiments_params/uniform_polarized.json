@@ -18,7 +18,7 @@
     },
     "general_params": {
         "T": 3000,
-        "num_repetitions": 10,
+        "num_repetitions": 50,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/uniform_polarized/"
