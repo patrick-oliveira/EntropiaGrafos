@@ -13,7 +13,7 @@
         "polarization_type": [0]
     },
     "general_params": {
-        "T": 2000,
+        "T": 3000,
         "num_repetitions": 5,
         "early_stop": true,
         "epsilon": 0.00000001,
