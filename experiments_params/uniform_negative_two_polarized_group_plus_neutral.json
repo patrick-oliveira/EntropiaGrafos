@@ -10,13 +10,17 @@
         "omega": [0.4, 0.2],
         "gamma": [0],
         "preferential_attachment": [2],
-        "polarization_type": [0]
+        "polarization_type": [0],
+        "distribution": ["from_list"],
+        "base_list": [
+            [1, 3, 5]
+        ]
     },
     "general_params": {
         "T": 1500,
-        "num_repetitions": 1000,
+        "num_repetitions": 10,
         "early_stop": true,
         "epsilon": 0.00000001,
-        "results_path": "results/two_polarized_group_plus_neutral/"
+        "results_path": "results/uniform_negative_two_polarized_group_plus_neutral/"
     }
 }

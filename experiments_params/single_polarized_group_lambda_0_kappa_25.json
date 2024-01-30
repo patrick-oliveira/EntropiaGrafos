@@ -14,7 +14,7 @@
     },
     "general_params": {
         "T": 3000,
-        "num_repetitions": 5,
+        "num_repetitions": 5000,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/single_polarized_group_lambda_0_kappa_25/"
