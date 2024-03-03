@@ -3,55 +3,88 @@ import numpy as np
 from opdynamics import seed
 from opdynamics.components import Individual
 from opdynamics.math.entropy import JSD
-from opdynamics.utils.types import Binary, Graph, TransitionProbabilities
+from opdynamics.utils.types import Graph, TransitionProbabilities
+from typing import Union
 
 np.random.seed(seed)
 
-def evaluate_information(code: Binary, acceptance_probability: float) -> Binary:
+
+def evaluate_information(
+    code: np.ndarray,
+    acceptance_probability: float
+) -> Union[None, np.ndarray]:
     """
-    Function which decides wether or not the incoming information will be accepted. If refused, return "None"
+    Function which decides wether or not the incoming information will be
+    accepted. If refused, return "None"
 
     Args:
-        code (Binary): A incoming binary code.
+        code (np.ndarray): A incoming binary code.
         acceptance_probability (float): Probability of accepting "code"
 
     Returns:
-        [Binary]: The incoming binary code, if accepted, otherwise "None".
+        [np.ndarray]: The incoming binary code, if accepted, otherwise "None".
     """
     return code if (np.random.uniform() <= acceptance_probability) else None
 
-def get_transition_probabilities(ind: Individual, tendency:str = None) -> TransitionProbabilities:
+
+def get_transition_probabilities(
+    ind: Individual,
+    tendency: str = None
+) -> TransitionProbabilities:
     """
-    Return a dictionary with probabilities of bit distortion, i.e. the probability of 0 -> 1 and 1 -> 0, considering the individual's tendency.
+    Return a dictionary with probabilities of bit distortion, i.e. the
+    probability of 0 -> 1 and 1 -> 0, considering the individual's tendency.
 
     Args:
         ind (Individual): An individual object.
-        tendency (str): The identification of the individual's tendency (polarizing upwards or downwards)
+        tendency (str): The identification of the individual's tendency
+        (polarizing upwards or downwards)
 
     Returns:
-        TransitionProbabilities: The dictionary of probabilities for the transitions 0 -> 1 and 1 -> 0.
+        TransitionProbabilities: The dictionary of probabilities for the
+        transitions 0 -> 1 and 1 -> 0.
     """
     return {0: ind.delta + ind.xi, 1: ind.delta} if tendency == 1 else \
            {0: ind.delta, 1: ind.delta + ind.xi} if tendency == -1 else \
            {0: ind.delta, 1: ind.delta}
 
-def distort(code: Binary, transition_probability: TransitionProbabilities) -> Binary:
+
+def distort(
+    code: np.ndarray,
+    transition_probability: TransitionProbabilities
+) -> np.ndarray:
     """
-    Return 'code' after bitwise distortion according to the probabilities given by "transition_probability".
+    Distorts the given code using the provided transition probabilities.
 
     Args:
-        code (Binary): A binary code.
-        transition_probability (TransitionProbabilities): The probabilitions for the transitions 0 -> 1 and 1 -> 0.
+        code (np.ndarray): The code to be distorted.
+        transition_probability (TransitionProbabilities): The transition
+        probabilities.
 
     Returns:
-        Binary: A possibily bitwise distorted code.
+        np.ndarray: The distorted code.
     """
     for k in range(len(code)):
         code[k] = mutate(code[k], transition_probability)
 
     return code
 
-def mutate(bit: int, transition_probability: TransitionProbabilities) -> Binary:
+
+def mutate(
+    bit: int,
+    transition_probability: TransitionProbabilities
+) -> int:
+    """
+    Mutates a bit based on a given transition probability.
+
+    Args:
+        bit (int): The bit to be mutated.
+        transition_probability (TransitionProbabilities): The transition
+        probabilities for each bit.
+
+    Returns:
+        int: The mutated bit.
+    """
     x = np.random.uniform()
     p = transition_probability[bit]
     if x <= p:

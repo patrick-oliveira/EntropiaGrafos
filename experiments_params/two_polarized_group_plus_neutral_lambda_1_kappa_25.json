@@ -6,7 +6,7 @@
         "code_length": [5],
         "kappa": [25],
         "lambd": [1],
-        "alpha": [0.6, 0.5, 0.4],
+        "alpha": [0.6, 0.5, 0.4, 0.2],
         "omega": [0.4, 0.2],
         "gamma": [0],
         "preferential_attachment": [2],
@@ -14,7 +14,7 @@
     },
     "general_params": {
         "T": 3000,
-        "num_repetitions": 100,
+        "num_repetitions": 10,
         "early_stop": true,
         "epsilon": 0.00000001,
         "results_path": "results/two_polarized_group_plus_neutral_lambda_1_kappa_25/"

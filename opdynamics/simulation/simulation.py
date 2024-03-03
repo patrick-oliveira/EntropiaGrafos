@@ -164,7 +164,7 @@ def evaluate_model(
                         print(
                             worker_id +\
                             "Difference between current and last runs is below "\
-                            "the {epsilon} threshold. Stopping simulation."
+                            f"the {epsilon} threshold. Stopping simulation."
                         )
                         run_count(-2, save_path)
                         break

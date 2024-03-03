@@ -10,7 +10,10 @@ from opdynamics.components.memory import (
 from opdynamics.components.utils import random_selection
 from opdynamics.math.entropy import memory_entropy
 from opdynamics.math.polarity import polarity
-from opdynamics.utils.types import Memory
+from opdynamics.utils.types import (
+    Memory,
+    TransitionProbabilities
+)
 
 
 class Individual:
@@ -29,6 +32,9 @@ class Individual:
         self.L_temp = []
         self.transmissions = 0
         self.acceptances = 0
+        # initialized by the method "compute_sigma_attribute"
+        # this is a horrible piece of code, but it works
+        self.DistortionProbability: TransitionProbabilities = None
 
     @property
     def L(self):

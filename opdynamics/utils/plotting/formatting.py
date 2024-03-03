@@ -25,11 +25,11 @@ def hist_classical_structure(
 ):
     if type(axis) != np.ndarray:
         axis = np.array([axis])
-        
+
     for ax in axis.flatten():
         for axis_line in ['top', 'bottom', 'left', 'right']:
             ax.spines[axis_line].set_linewidth(axis_width)
-            
+
         ax.xaxis.set_major_locator(MaxNLocator(num_x_ticks))
         ax.yaxis.set_major_locator(MaxNLocator(num_y_ticks))
         ax.xaxis.set_minor_locator(AutoMinorLocator())
@@ -49,7 +49,7 @@ def hist_classical_structure(
             which = 'minor',
             length = 3
         )
-        
+
         ax.set_xticklabels([int(x) for x in ax.get_xticks()], rotation = 45)
     return fig, axis
 
@@ -67,11 +67,11 @@ def violin_classical_structure(
 ):
     if type(axis) != np.ndarray:
         axis = np.array([axis])
-        
+
     for ax in axis.flatten():
         for axis_line in ['top', 'bottom', 'left', 'right']:
             ax.spines[axis_line].set_linewidth(axis_width)
-            
+
         ax.yaxis.set_major_locator(MaxNLocator(num_y_ticks))
         ax.yaxis.set_minor_locator(AutoMinorLocator())
 
@@ -89,14 +89,14 @@ def violin_classical_structure(
             which = 'minor',
             length = 3
         )
-        
+
         ax.set_xticks([1, 2, 3])
         ax.set_xticklabels(x_tick_labels)
-        
+
     return fig, axis
 
 def classical_structure(
-    fig: Figure, 
+    fig: Figure,
     axis: Union[Axis, np.ndarray],
     axis_width: float = 1.08,
     tick_pad: int = 8,
@@ -108,16 +108,16 @@ def classical_structure(
 ) -> Tuple[Figure, Axis]:
     if type(axis) != np.ndarray:
         axis = np.array([axis])
-        
+
     for ax in axis.flatten():
         for axis_line in ['top', 'bottom', 'left', 'right']:
             ax.spines[axis_line].set_linewidth(axis_width)
-        
+
         ax.xaxis.set_major_locator(MaxNLocator(num_x_ticks))
         ax.yaxis.set_major_locator(MaxNLocator(num_y_ticks))
         ax.xaxis.set_minor_locator(AutoMinorLocator())
         ax.yaxis.set_minor_locator(AutoMinorLocator())
-        
+
         ax.tick_params(
             which = 'both',
             top = True,
@@ -135,16 +135,16 @@ def classical_structure(
             which = 'minor',
             length = 3
         )
-        
+
         xticks = ax.xaxis.get_major_ticks()
         xticks[0].label2.set_visible(False)
         xticks[0].tick2line.set_visible(False)
-        
+
         yticks = ax.yaxis.get_major_ticks()
         yticks[0].label2.set_visible(False)
         yticks[0].tick2line.set_visible(False)
         yticks[-1].tick2line.set_visible(False)
-         
+
     return fig, axis
 
 def format_text(
@@ -164,7 +164,7 @@ def format_text(
 ) -> Tuple[Figure, Union[Axis, np.ndarray]]:
     if type(axis) != np.ndarray:
         axis = np.array([axis])
-        
+
     for ax, title in zip(axis.flatten(), titles):
         ax.set_title(title, y = 1.015)
 
@@ -185,10 +185,10 @@ def format_text(
     else:
         for ax in axis.flatten():
             ax.set_ylabel(ylabel)
-            
+
     for ax in axis.flatten():
         ax.xaxis.label.set_size(xlabel_fontsize)
         ax.yaxis.label.set_size(ylabel_fontsize)
         ax.title.set_size(title_size)
-        
+
     return fig, axis

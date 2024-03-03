@@ -6,8 +6,10 @@ import numpy as np
 from opdynamics import seed
 from opdynamics.components import Individual
 from opdynamics.math.entropy import S
-from opdynamics.model.dynamics import (acceptance_probability,
-                                       get_transition_probabilities)
+from opdynamics.model.dynamics import (
+    acceptance_probability,
+    get_transition_probabilities
+)
 
 
 class Model:

@@ -27,6 +27,8 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
     param_o_p = param_list[0]["general_parameters"]["results_path"]
 
     for k, params in enumerate(param_list):
+        gen_params = params["general_parameters"]
+
         print(f"[WORKER {worker_id}] Param set {k + 1} out of {num_params}")
 
         simulation_params_tuple = get_param_tuple(params)
@@ -44,10 +46,12 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
         else:
             model, last_run = load_experiment(output_path)
 
-            if last_run == -2 or last_run == int(params['num_repetitions']):
+            converged = last_run == -2
+            max_repetitions = last_run == int(gen_params['num_repetitions'])
+            if converged or max_repetitions:
                 print(
                     f"[WORKER {worker_id}] This parameter combination has "
-                    f"already been simulated up to {params['num_repetitions']}"
+                    f"been simulated up to {gen_params['num_repetitions']}"
                     " or up to an acceptable error threshold."
                 )
                 continue
@@ -60,15 +64,13 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
         print(f"[WORKER {worker_id}] Starting simulation.")
         start = time()
 
-        general_params = params["general_parameters"]
-
         try:
             elapsed_time, statistic_handler = evaluate_model(
                 model,
-                T = general_params["T"],
-                num_repetitions = general_params["num_repetitions"],
-                early_stop = general_params["early_stop"],
-                epsilon = general_params["epsilon"],
+                T = gen_params["T"],
+                num_repetitions = gen_params["num_repetitions"],
+                early_stop = gen_params["early_stop"],
+                epsilon = gen_params["epsilon"],
                 last_run = last_run,
                 verbose = True,
                 save_runs = True,

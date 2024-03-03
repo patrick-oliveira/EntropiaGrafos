@@ -1,7 +1,7 @@
 import unittest as ut
 import numpy as np
 
-from opdynamics.model.dynamics import mutate
+from opdynamics.model.dynamics import mutate, distort
 from opdynamics.model.model import Model
 from opdynamics.utils.types import TransitionProbabilities
 
@@ -82,5 +82,46 @@ class TestMutation(ut.TestCase):
             "The mean of the output bits should be 0.9."
         )
 
+    def test_distort(self):
+        def f(i_code: np.ndarray, tp: TransitionProbabilities) -> float:
+            dist_sum = []
+            for _ in range(10**5):
+                dist_sum.append(distort(i_code, tp).sum())
+            mutate_mean = np.mean(dist_sum)
+            mutate_mean = round(mutate_mean, 1)
+            return mutate_mean
 
+        code = np.array([0, 1, 0, 1, 0])
 
+        tp = {
+            0: 0.5,
+            1: 0.5
+        }
+        mean = f(code, tp)
+        self.assertEqual(
+            mean,
+            2.5,
+            "The mean of the output bits should be 2.5."
+        )
+
+        tp = {
+            0: 0.1,
+            1: 0.9
+        }
+        mean = f(code, tp)
+        self.assertEqual(
+            mean,
+            0.5,
+            "The mean of the output bits should be 0.5."
+        )
+
+        tp = {
+            0: 0.9,
+            1: 0.1
+        }
+        mean = f(code, tp)
+        self.assertEqual(
+            mean,
+            4.5,
+            "The mean of the output bits should be 4.5."
+        )
