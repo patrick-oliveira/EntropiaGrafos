@@ -4,23 +4,19 @@
         "network_size": [500],
         "memory_size": [256],
         "code_length": [5],
-        "kappa": [0, 15, 25, 30],
-        "lambd": [0],
-        "alpha": [0],
+        "kappa": [25],
+        "lambd": [1],
+        "alpha": [1, 0.6, 0.2],
         "omega": [0],
         "gamma": [-1, 0, 1],
         "preferential_attachment": [2],
-        "polarization_type": [0],
-        "distribution": ["from_list"],
-        "base_list": [
-            [25, 27, 30]
-        ]
+        "polarization_type": [0]
     },
     "general_params": {
-        "T": 1000,
+        "T": 3000,
         "num_repetitions": 5,
         "early_stop": true,
-        "epsilon": 0.000000001,
-        "results_path": "results/case_1_uniform/"
+        "epsilon": 0.00000001,
+        "results_path": "results/single_polarized_group_lambda_1_kappa_25/"
     }
 }
