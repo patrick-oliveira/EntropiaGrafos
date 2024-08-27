@@ -111,11 +111,17 @@ def make_new_experiment(
 
 
 def load_experiment(
-    output_path: Path
+    output_path: str
 ) -> Tuple[Model, int]:
-    f = open(output_path / "last_run.txt", "r")
+    f = open(
+        os.path.join(output_path, "last_run.txt"),
+        "r"
+    )
     last_run = int(f.read())
     f.close()
-    model = pickle.load(open(output_path / "initial_model.pkl", "rb"))
+    model = pickle.load(open(
+        os.path.join(output_path, "initial_model.pkl"),
+        "rb"
+    ))
 
     return model, last_run

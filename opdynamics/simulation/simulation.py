@@ -6,6 +6,7 @@ from pprint import pprint
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import multiprocessing as mp
 
 from opdynamics.model import Model, stats_dict
 from opdynamics.model.dynamics import distort, evaluate_information
@@ -87,13 +88,22 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
 
     return statistic_handler
 
-def Parallel_evaluateModel(
+
+def worker(*args, **kwargs):
+    print("Worker runned.")
+
+
+def parallel_evaluate_model(
     initial_model: Model,
     T: int,
-    num_repetitions: int,
-    verbose: bool = False
-) -> Tuple[float, List[Dict], Dict]:
-    pass
+    num_repetitions: int = 1,
+    num_processes: int = -1,
+    *args,
+    **kwargs
+):
+    with mp.Pool() as pool:
+        pool.map(worker, range(num_repetitions))
+
 
 def evaluate_model(
     initial_model: Model,
