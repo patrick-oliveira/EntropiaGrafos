@@ -5,9 +5,7 @@ from opdynamics import code_length
 from opdynamics.math.polarity import polarity
 from opdynamics.utils.types import CodeDistribution, Memory
 from opdynamics.components.utils import (
-    complete_zeros,
-    to_bin,
-    string_to_binary,
+    generate_random_samples,
     binary_to_string,
     POWERS_OF_TWO
 )
@@ -15,121 +13,30 @@ from opdynamics.components.utils import (
 
 def initialize_memory(
     memory_size: int,
-    distribution: str = "binomial",
+    code_dimensions: int = 2,
+    distribution: str = "normal",
+    random_seed: int = 42,
+    mean: np.array = None,
+    cov: float = None,
     *args,
     **kwargs
 ) -> Memory:
-    """
-    Create a list of size "mu" of random binary codes of an specified,
-    fixed length, taken from a binomial distribution.
-    The parameters are defined by the model.
-
-    Returns:
-        Memory: A tuple containing a numpy array of binary codes and it's
-        corresponding polarities.
-    """
-    code_array = get_binary_codes(
-        mu = memory_size,
-        m = code_length,
+    codes = generate_random_samples(
+        n_samples = memory_size,
+        n_dimensions = code_dimensions,
+        random_seed = random_seed,
         distribution = distribution,
-        *args,
-        **kwargs
+        mean = mean,
+        cov = cov,
     )
-    polarity_array = polarity(x = code_array)
+    polarities = polarity(codes)
 
     memory = Memory(
-        codes = code_array,
-        polarities = polarity_array
+        codes = codes,
+        polarities = polarities
     )
 
     return memory
-
-
-def get_binary_codes(
-    mu: int,
-    m: int,
-    distribution: str = "binomial",
-    *args,
-    **kwargs
-) -> np.ndarray:
-    """
-    Return a list of size "mu" of random binary codes of length "m" taken from
-    a specified distribution.
-
-    Args:
-        mu (int): Number of binary codes to be generated.
-        m (int): Code's length.
-        distribution (str, optional): Distribution to sample from.
-            Supported distributions are "binomial", "poisson", and "from_list".
-            Defaults to "binomial".
-        *args: Additional positional arguments.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        np.ndarray: An array of binary codes.
-
-    Raises:
-        AssertionError: If the specified distribution requires additional
-        arguments and they are not provided.
-
-    Examples:
-        >>> get_binary_codes(10, 5)
-        array([[1, 0, 1, 0, 1],
-               [0, 1, 0, 1, 1],
-               [1, 1, 0, 0, 1],
-               [0, 0, 1, 1, 0],
-               [1, 1, 1, 0, 0],
-               [0, 1, 1, 1, 0],
-               [1, 0, 0, 1, 0],
-               [1, 0, 1, 1, 1],
-               [0, 1, 0, 0, 0],
-               [1, 0, 0, 0, 1]])
-
-    """
-    if distribution == "binomial":
-        numbers = np.random.binomial(2**m, 0.5, size=mu)
-    elif distribution == "poisson":
-        assert "lam" in kwargs.keys(), (
-            "You must provide a lambda value if 'distribution' is 'poisson'."
-        )
-        lam = kwargs["lam"]
-        numbers = np.random.poisson(lam, size=mu)
-    elif distribution == "from_list":
-        assert "base_list" in kwargs.keys(), (
-            "You must provide a list of integers to sample from if "
-            "'distribution' is 'from_list'."
-        )
-        base_info_list = kwargs["base_list"]
-        probabilities = np.linspace(0, 1, len(base_info_list) + 1)[1:]
-
-        def f(p: float) -> int:
-            for k in range(len(probabilities)):
-                if p <= probabilities[k]:
-                    return base_info_list[k]
-
-        numbers = np.random.uniform(0, 1, size=mu)
-        numbers = [f(x) for x in numbers]
-
-    code_list = [generate_code(a, m) for a in numbers]
-    code_array = np.asarray(code_list)
-
-    return code_array
-
-
-def generate_code(x: int, m: int) -> np.ndarray:
-    """
-    Generate a binary code of length "m" for a given integer "x".
-
-    Args:
-        x (int): An integer.
-        m (int): Size of the binary code (for standardization).
-
-    Returns:
-        np.ndarray: A binary code.
-    """
-    code = complete_zeros(to_bin(x), m)
-    code = string_to_binary(code)
-    return code
 
 
 def probability_distribution(

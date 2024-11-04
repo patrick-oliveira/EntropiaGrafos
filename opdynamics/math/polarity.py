@@ -18,16 +18,4 @@ def polarity_weights(*args, **kwargs) -> Weights:
 
 
 def polarity(x: np.ndarray, *args, **kwargs) -> float:
-    """Return the weighted average of bits using "beta" as weight vector.
-
-    Args:
-        x (np.ndarray): A binary code (numpy array of bits) or a list of
-        binary codes
-
-    Returns:
-        float: The information's polarity (a weighted average)
-    """
-    return np.dot(beta, x.T)
-
-
-beta = polarity_weights()
+    return [0.5 for _ in x.shape[0]]
