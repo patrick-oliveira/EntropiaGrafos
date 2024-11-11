@@ -3,6 +3,7 @@ import matplotlib.figure as fig
 import networkx as nx
 import numpy as np
 
+from sklearn.neighbors import KernelDensity
 from pydantic import BaseModel
 from pydantic_numpy import NpNDArray
 from typing import (
@@ -14,13 +15,16 @@ from typing import (
 )
 
 
-class Memory(BaseModel):
+KernelProbabilityDensity = NewType('KernelProbabilityDensity', KernelDensity)
+
+
+class Memory(TypedDict):
     codes: NpNDArray
     polarities: NpNDArray
+    distribution: KernelDensity
 
 
-class CodeDistribution(BaseModel):
-    distribution: Dict[str, float]
+CodeDistribution = NewType('CodeDistribution', Dict[str, float])
 
 
 class SimulationParameters(BaseModel):
@@ -61,8 +65,8 @@ TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
 Figure = NewType('Figure', fig.Figure)
 Axis   = NewType('Figure', ax.Axes)
 
-l_multiply = lambda x, y: x * y
-l_sum      = lambda x, y: x + y
+l_multiply = lambda x, y: x * y # noqa
+l_sum      = lambda x, y: x + y # noqa
 
 
 class SimulationResult(TypedDict):

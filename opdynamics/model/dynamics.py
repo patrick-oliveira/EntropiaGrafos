@@ -3,7 +3,8 @@ import numpy as np
 from opdynamics import seed
 from opdynamics.components import Individual
 from opdynamics.math.entropy import JSD
-from opdynamics.utils.types import Graph, TransitionProbabilities
+from opdynamics.utils.types import Graph, Memory
+from opdynamics.components.utils import generate_random_samples
 from typing import Union
 
 np.random.seed(seed)
@@ -27,87 +28,54 @@ def evaluate_information(
     return code if (np.random.uniform() <= acceptance_probability) else None
 
 
-def get_transition_probabilities(
-    ind: Individual,
-    tendency: str = None
-) -> TransitionProbabilities:
-    """
-    Return a dictionary with probabilities of bit distortion, i.e. the
-    probability of 0 -> 1 and 1 -> 0, considering the individual's tendency.
-
-    Args:
-        ind (Individual): An individual object.
-        tendency (str): The identification of the individual's tendency
-        (polarizing upwards or downwards)
-
-    Returns:
-        TransitionProbabilities: The dictionary of probabilities for the
-        transitions 0 -> 1 and 1 -> 0.
-    """
-    return {0: ind.delta + ind.xi, 1: ind.delta} if tendency == 1 else \
-           {0: ind.delta, 1: ind.delta + ind.xi} if tendency == -1 else \
-           {0: ind.delta, 1: ind.delta}
-
-
 def distort(
     code: np.ndarray,
-    transition_probability: TransitionProbabilities
+    ind_tendency: int,
+    memory: Memory,
+    noise_distribution: str = "multivariate_normal",
+    *args,
+    **kwargs,
 ) -> np.ndarray:
+    polarities = memory["polarities"]
+    codes = memory["codes"]
+
+    noise = generate_random_samples(
+        n_samples = 1,
+        n_dimensions = code.shape[1],
+        distribution = noise_distribution,
+    )
+
+    if ind_tendency == 1:
+        max_polarity = np.argmax(polarities)
+        noise = noise + (code - codes[max_polarity])
+    elif ind_tendency == -1:
+        min_polarity = np.argmin(polarities)
+        noise = noise + (code - codes[min_polarity])
+
+    return code + noise
+
+
+def proximity(u: Individual, v: Individual) -> float:
     """
-    Distorts the given code using the provided transition probabilities.
-
-    Args:
-        code (np.ndarray): The code to be distorted.
-        transition_probability (TransitionProbabilities): The transition
-        probabilities.
-
-    Returns:
-        np.ndarray: The distorted code.
-    """
-    for k in range(len(code)):
-        code[k] = mutate(code[k], transition_probability)
-
-    return code
-
-
-def mutate(
-    bit: int,
-    transition_probability: TransitionProbabilities
-) -> int:
-    """
-    Mutates a bit based on a given transition probability.
-
-    Args:
-        bit (int): The bit to be mutated.
-        transition_probability (TransitionProbabilities): The transition
-        probabilities for each bit.
-
-    Returns:
-        int: The mutated bit.
-    """
-    x = np.random.uniform()
-    p = transition_probability[bit]
-    if x <= p:
-        return int(not bit)
-    else:
-        return bit
-
-def proximity(u: Individual, v:Individual) -> float:
-    """
-    Return the proximity between individuals u and v based on the Jensen-Shannon Divergence.
+    Return the proximity between individuals u and v based on the
+    Jensen-Shannon Divergence.
 
     Args:
         u (Individual): An individual 'u'
         v (Individual): An individual 'v'
 
     Returns:
-        float: The Jensen-Shannon Divergence JSD(Pu, Pv), where Pu and Pv are the memory's probability distribution of individuals u and v, respectively.
+        float: The Jensen-Shannon Divergence JSD(Pu, Pv), where Pu and Pv are
+        the memory's probability distribution of individuals u and v,
+        respectively.
     """
     return 1 - JSD(u.P, v.P)
 
+
 def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     """
-    Return the probability that an individual "u" will accept and information given by "v".
+    Return the probability that an individual "u" will accept and information
+    given by "v".
 
     ==>> Write the latex formula here. <<==
 
@@ -122,11 +90,13 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     """
 
     max_sigma = max(
-        set([G.degree[u]**gamma]).union([G.degree[w]**gamma for w in list(G.neighbors(u))])
+        set([G.degree[u]**gamma]).union(
+            [G.degree[w]**gamma for w in list(G.neighbors(u))]
+        )
     )
 
-    sigma_ratio =(G.degree[v]**gamma)/max_sigma
-    return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
+    sigma_ratio = (G.degree[v]**gamma) / max_sigma
+    return 2 / (1 / (G[u][v]['Distance'] + e) + 1 / (sigma_ratio + e))
 
 
 e = 1e-10

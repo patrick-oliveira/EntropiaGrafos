@@ -17,7 +17,6 @@ def initialize_model(
     graph_type: str,
     network_size: int,
     memory_size: int,
-    code_length: int,
     kappa: float,
     lambd: float,
     alpha: float,
@@ -29,7 +28,7 @@ def initialize_model(
     edge_prob: float = None,
     verbose: bool = False,
     worker_id: int = None,
-    distribution: str = "binomial",
+    distribution: str = "multivariate_normal",
     *args,
     **kwargs,
 ) -> Model:
@@ -42,7 +41,6 @@ def initialize_model(
         graph_type = graph_type,
         network_size = network_size,
         memory_size = memory_size,
-        code_length = code_length,
         kappa = kappa,
         lambd = lambd,
         alpha = alpha,
@@ -75,9 +73,9 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
             "Entropy",
             "Proximity",
             "Polarity",
-            "Distribution",
-            "Acceptance",
-            "Transmission"
+            # "Distribution",
+            # "Acceptance",
+            # "Transmission"
         ]
 
     for name in s_names:
@@ -202,7 +200,11 @@ def simulate(M: Model):
         v_ind = M.indInfo(v)
         received = u_ind.receive_information(
             evaluate_information(
-                distort(v_ind.X, v_ind.DistortionProbability),
+                distort(
+                    code = v_ind.X,
+                    ind_tendency = v_ind.tendency,
+                    memory = v_ind.L
+                ),
                 M.get_acceptance_probability(u, v)
             )
         )
@@ -211,7 +213,11 @@ def simulate(M: Model):
             u_ind.received()
         received = v_ind.receive_information(
             evaluate_information(
-                distort(u_ind.X, u_ind.DistortionProbability),
+                distort(
+                    code = u_ind.X,
+                    ind_tendency = u_ind.tendency,
+                    memory = u_ind.L
+                ),
                 M.get_acceptance_probability(v, u)
             )
         )
