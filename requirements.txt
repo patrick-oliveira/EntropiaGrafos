@@ -6,3 +6,4 @@ seaborn
 pydantic
 pydantic-numpy
 KDEpy
+mypy

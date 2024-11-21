@@ -1,27 +1,29 @@
 import matplotlib.axes as ax
 import matplotlib.figure as fig
-import networkx as nx
+import networkx as nx  # type: ignore
 import numpy as np
 
-from sklearn.neighbors import KernelDensity
+from numpy.typing import NDArray
 from pydantic import BaseModel
-from pydantic_numpy import NpNDArray
 from typing import (
+    Any,
     Dict,
     List,
     NewType,
     TypedDict,
-    Optional
+    Optional,
 )
 
 
-KernelProbabilityDensity = NewType('KernelProbabilityDensity', KernelDensity)
+class KernelDensityEstimator:
+    def __getattr__(self, item: str) -> Any:
+        pass
 
 
 class Memory(TypedDict):
-    codes: NpNDArray
-    polarities: NpNDArray
-    distribution: KernelDensity
+    codes: NDArray
+    polarities: NDArray
+    distribution: KernelDensityEstimator
 
 
 CodeDistribution = NewType('CodeDistribution', Dict[str, float])

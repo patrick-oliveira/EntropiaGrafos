@@ -4,7 +4,7 @@ from opdynamics import seed
 from opdynamics.components import Individual
 from opdynamics.math.entropy import JSD
 from opdynamics.utils.types import Graph, Memory
-from opdynamics.components.utils import generate_random_samples
+from opdynamics.math.utils import generate_random_samples
 from typing import Union
 
 np.random.seed(seed)

@@ -18,7 +18,6 @@ def get_param_mean_data(
     entropy       = np.zeros(T)
     proximity     = np.zeros(T)
     polarity      = np.zeros(T)
-    distribution  = np.zeros((32, T))
     acceptances   = []
     transmissions = []
 
@@ -28,45 +27,43 @@ def get_param_mean_data(
         entropy      += run_data['Entropy']
         proximity    += run_data["Proximity"]
         polarity     += run_data["Polarity"]
-        distribution += np.array(run_data["Distribution"]).T
 
-        a = pd.DataFrame(
-            run_data["Acceptance"][-1],
-            columns = ["acceptances", 'degree']
-        )
-        acceptances.append(a)
+        # a = pd.DataFrame(
+        #     run_data["Acceptance"][-1],
+        #     columns = ["acceptances", 'degree']
+        # )
+        # acceptances.append(a)
 
-        t = pd.DataFrame(
-            run_data["Transmission"][-1],
-            columns = ['transmissions', 'degree']
-        )
-        transmissions.append(t)
+        # t = pd.DataFrame(
+        #     run_data["Transmission"][-1],
+        #     columns = ['transmissions', 'degree']
+        # )
+        # transmissions.append(t)
 
     entropy      /= num_runs
     proximity    /= num_runs
     polarity     /= num_runs
-    distribution /= num_runs
 
-    acceptances = pd.concat(
-        acceptances,
-        ignore_index = True
-    ).groupby(by = "degree").agg('mean')
-    acceptances['acceptances'] = acceptances['acceptances'].astype(int)
-    acceptances = acceptances.to_dict()["acceptances"]
+    # acceptances = pd.concat(
+    #     acceptances,
+    #     ignore_index = True
+    # ).groupby(by = "degree").agg('mean')
+    # acceptances['acceptances'] = acceptances['acceptances'].astype(int)
+    # acceptances = acceptances.to_dict()["acceptances"]
 
-    transmissions = pd.concat(
-        transmissions, ignore_index = True
-    ).groupby(by = "degree").agg('mean')
-    transmissions['transmissions'] = transmissions['transmissions'].astype(int)
-    transmissions = transmissions.to_dict()['transmissions']
+    # transmissions = pd.concat(
+    #     transmissions, ignore_index = True
+    # ).groupby(by = "degree").agg('mean')
+    # transmissions['transmissions'] = transmissions['transmissions'].astype(int)
+    # transmissions = transmissions.to_dict()['transmissions']
 
     mean_stats = {
         "entropy": entropy,
         "proximity": proximity,
         "polarity": polarity,
-        "distribution": distribution,
-        "acceptances": acceptances,
-        "transmissions": transmissions
+        # "distribution": distribution,
+        # "acceptances": acceptances,
+        # "transmissions": transmissions
     }
 
     return mean_stats

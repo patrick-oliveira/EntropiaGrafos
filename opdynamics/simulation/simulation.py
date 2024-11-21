@@ -183,6 +183,7 @@ def evaluate_model(
 
     return elapsedTime, statistic_handler
 
+
 def simulate(M: Model):
     """
     Execute one iteration of the information propagation model, updating the model's

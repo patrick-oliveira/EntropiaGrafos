@@ -1,15 +1,14 @@
 import random
-
 import numpy as np
 
+from numpy.typing import NDArray
+from typing import List
 from opdynamics.math.entropy import memory_entropy
-from opdynamics.math.polarity import polarity
+from opdynamics.utils.types import Memory
 from opdynamics.components.memory import (
     initialize_memory,
-    probability_distribution
-)
-from opdynamics.utils.types import (
-    Memory,
+    probability_distribution,
+    polarity
 )
 
 
@@ -21,22 +20,21 @@ class Individual:
         distribution: str = "multivariate_normal",
         info_dimension: int = 2,
         tendency: int = 0,
-        *args,
         **kwargs
     ):
         self.kappa = kappa
         self.memory_size = memory_size
         self.tendency = tendency
+        # Could this be improved for reproducibility sake?
         self.seed = random.randint(1, 100)
 
-        self.L = initialize_memory(
+        self.L = initialize_memory(  # type: ignore
             memory_size = memory_size,
             info_dimension = info_dimension,
             distribution = distribution,
-            *args,
             **kwargs
         )
-        self.L_temp = []
+        self.L_temp: List[NDArray] = []
 
         self.stats = {
             "transmissions": 0,
@@ -63,7 +61,7 @@ class Individual:
     def delta(self):
         return self._delta
 
-    @L.setter
+    @L.setter  # type: ignore
     def L(self, memory: Memory):
         """
         Everytime the memory is updated, its probability distribution is

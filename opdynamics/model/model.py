@@ -169,6 +169,12 @@ class Model:
                 p = self.p,
                 seed = seed
             )
+        else:
+            raise ValueError(
+                f"Graph type '{self.graph_type}' is not supported."
+            )
+
+        print(f"Graph created with {self.N} nodes.")
 
     def compute_model_measures(self):
         self.compute_edge_weights()
@@ -222,15 +228,21 @@ class Model:
         nx.set_node_attributes(
             self.G,
             {node: Individual(
-                self.kappa,
-                self.mu,
-                self.distribution,
+                kappa = self.kappa,
+                memory_size = self.mu,
+                distribution = self.distribution,
                 *self.args,
                 **self.kwargs
             ) for node in self.G},
             name = 'Object'
         )
         self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
+
+        print(
+            f"Nodes initialized with {self.mu} memory size, "
+            f"{self.kappa} conservation factor, and "
+            f"{self.distribution} distribution."
+        )
 
     def group_individuals(self):
         """
