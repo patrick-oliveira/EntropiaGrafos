@@ -8,7 +8,6 @@ from opdynamics.components import Individual
 from opdynamics.math.entropy import S
 from opdynamics.model.dynamics import (
     acceptance_probability,
-    get_transition_probabilities
 )
 
 
@@ -18,7 +17,6 @@ class Model:
         graph_type: str,
         network_size: int,
         memory_size: int,
-        code_length: int,
         kappa: float,
         lambd: float,
         alpha: float,
@@ -29,7 +27,7 @@ class Model:
         d: int = None,
         p: float = None,
         initialize: bool = True,
-        distribution: str = "binomial",
+        distribution: str = "multivariate_normal",
         *args,
         **kwargs
     ):
@@ -92,7 +90,6 @@ class Model:
 
         # Individual parameters
         self.mu    = memory_size
-        self.m     = code_length
         self.kappa = kappa
         self.alpha = alpha
         self.omega = omega
@@ -172,6 +169,12 @@ class Model:
                 p = self.p,
                 seed = seed
             )
+        else:
+            raise ValueError(
+                f"Graph type '{self.graph_type}' is not supported."
+            )
+
+        print(f"Graph created with {self.N} nodes.")
 
     def compute_model_measures(self):
         self.compute_edge_weights()
@@ -225,15 +228,21 @@ class Model:
         nx.set_node_attributes(
             self.G,
             {node: Individual(
-                self.kappa,
-                self.mu,
-                self.distribution,
+                kappa = self.kappa,
+                memory_size = self.mu,
+                distribution = self.distribution,
                 *self.args,
                 **self.kwargs
             ) for node in self.G},
             name = 'Object'
         )
         self._ind_vertex_objects = nx.get_node_attributes(self.G, 'Object')
+
+        print(
+            f"Nodes initialized with {self.mu} memory size, "
+            f"{self.kappa} conservation factor, and "
+            f"{self.distribution} distribution."
+        )
 
     def group_individuals(self):
         """
@@ -255,29 +264,20 @@ class Model:
                 np.argsort([self.G.degree[x] for x in range(self.N)])
             )
 
+        individuals = list(self.G.nodes)
+
         b = int(self.alpha * self.N)
-        group_alpha = indices[:b]
+        for idx in indices[:b]:
+            setattr(self.indInfo(individuals[idx]), 'tendency', 1)
 
         a = int(self.alpha * self.N)
         b = int(self.alpha * self.N) + int(self.omega * self.N)
-        group_omega = indices[a:b]
+        for idx in indices[a:b]:
+            setattr(self.indInfo(individuals[idx]), 'tendency', -1)
 
         a = int(self.alpha * self.N) + int(self.omega * self.N)
-        group_neutral = indices[a:]
-
-        attribute_dict = {}
-        attribute_dict.update(
-            {list(self.G.nodes())[i]: 1 for i in group_alpha}
-        )
-        attribute_dict.update(
-            {list(self.G.nodes())[i]: -1 for i in group_omega}
-        )
-        attribute_dict.update(
-            {list(self.G.nodes())[i]: 0 for i in group_neutral}
-        )
-
-        nx.set_node_attributes(self.G, attribute_dict, name = 'Tendency')
-        self._vertex_tendencies = nx.get_node_attributes(self.G, 'Tendency')
+        for idx in indices[a:]:
+            setattr(self.indInfo(individuals[idx]), 'tendency', 0)
 
     def compute_sigma_attribute(self):
         """
@@ -285,7 +285,6 @@ class Model:
         """
         for node in self.G:
             individual = self.indInfo(node)
-            tendency   = self.indTendency(node)
             global_proximity = sum([
                 self.G.edges[(node, neighbor)]['Distance']
                 for neighbor in self.G.neighbors(node)
@@ -300,11 +299,6 @@ class Model:
                 'xi',
                 1 / (np.exp(self.lambd) + 1)
             )
-            setattr(
-                individual,
-                'DistortionProbability',
-                get_transition_probabilities(individual, tendency)
-            )
 
     def compute_edge_weights(self):
         """
@@ -314,7 +308,7 @@ class Model:
         nx.set_edge_attributes(
             self.G,
             {
-                (u, v): (S(self.indInfo(u).P, self.indInfo(v).P))
+                (u, v): (S(self.indInfo(u).L, self.indInfo(v).L))
                 for u, v in self.G.edges
             },
             'Distance'
@@ -346,19 +340,6 @@ class Model:
             Individual: An instance of "Individual".
         """
         return self.ind_vertex_objects[node]
-
-    def indTendency(self, node: int) -> str:
-        """
-        Gets the polarization tendency of a given node index.
-
-        Args:
-            node (int): A vertex index.
-
-        Returns:
-            str: A string defining the polarization tendency of the node (Up,
-            Down or None)
-        """
-        return self.vertex_tendencies[node]
 
     def compute_graph_entropy(self) -> None:
         """

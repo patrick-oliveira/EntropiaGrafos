@@ -43,6 +43,7 @@ def worker(worker_input: Tuple[int, List[Parameters]]):
             )
             model = make_new_experiment(params, output_path)
             last_run = -1
+            print("teste")
         else:
             model, last_run = load_experiment(output_path)
 

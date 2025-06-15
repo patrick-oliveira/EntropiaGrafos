@@ -1,26 +1,32 @@
 import matplotlib.axes as ax
 import matplotlib.figure as fig
-import networkx as nx
+import networkx as nx  # type: ignore
 import numpy as np
 
+from numpy.typing import NDArray
 from pydantic import BaseModel
-from pydantic_numpy import NpNDArray
 from typing import (
+    Any,
     Dict,
     List,
     NewType,
     TypedDict,
-    Optional
+    Optional,
 )
 
 
-class Memory(BaseModel):
-    codes: NpNDArray
-    polarities: NpNDArray
+class KernelDensityEstimator:
+    def __getattr__(self, item: str) -> Any:
+        pass
 
 
-class CodeDistribution(BaseModel):
-    distribution: Dict[str, float]
+class Memory(TypedDict):
+    codes: NDArray
+    polarities: NDArray
+    distribution: KernelDensityEstimator
+
+
+CodeDistribution = NewType('CodeDistribution', Dict[str, float])
 
 
 class SimulationParameters(BaseModel):
@@ -61,8 +67,8 @@ TransitionProbabilities = NewType('TransitionProbabilities', Dict[str, float])
 Figure = NewType('Figure', fig.Figure)
 Axis   = NewType('Figure', ax.Axes)
 
-l_multiply = lambda x, y: x * y
-l_sum      = lambda x, y: x + y
+l_multiply = lambda x, y: x * y # noqa
+l_sum      = lambda x, y: x + y # noqa
 
 
 class SimulationResult(TypedDict):
