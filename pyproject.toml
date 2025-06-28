@@ -1,0 +1,19 @@
+[project]
+name = "entropiagrafos"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "kdepy>=1.1.12",
+    "matplotlib>=3.10.3",
+    "networkx>=3.5",
+    "numpy>=2.3.0",
+    "numpydantic>=1.6.9",
+    "pydantic>=2.11.7",
+    "pydantic-numpy>=8.0.1",
+    "scikit-learn>=1.7.0",
+    "scripts>=3.0",
+    "seaborn>=0.13.2",
+]

@@ -1,14 +1,18 @@
 import random
+
 import numpy as np
 
-from numpy.typing import NDArray
-from typing import List
-from opdynamics.math.entropy import memory_entropy
-from opdynamics.utils.types import Memory
+from opdynamics import max_H
 from opdynamics.components.memory import (
     initialize_memory,
-    probability_distribution,
-    polarity
+    probability_distribution
+)
+from opdynamics.components.utils import random_selection
+from opdynamics.math.entropy import memory_entropy
+from opdynamics.math.polarity import polarity
+from opdynamics.utils.types import (
+    Memory,
+    TransitionProbabilities
 )
 
 
@@ -17,29 +21,20 @@ class Individual:
         self,
         kappa: float,
         memory_size: int,
-        distribution: str = "multivariate_normal",
-        info_dimension: int = 2,
-        tendency: int = 0,
+        distribution: str = "binomial",
+        *args,
         **kwargs
     ):
         self.kappa = kappa
         self.memory_size = memory_size
-        self.tendency = tendency
-        # Could this be improved for reproducibility sake?
         self.seed = random.randint(1, 100)
-
-        self.L = initialize_memory(  # type: ignore
-            memory_size = memory_size,
-            info_dimension = info_dimension,
-            distribution = distribution,
-            **kwargs
-        )
-        self.L_temp: List[NDArray] = []
-
-        self.stats = {
-            "transmissions": 0,
-            "acceptances": 0
-        }
+        self.L = initialize_memory(memory_size, distribution, *args, **kwargs)
+        self.L_temp = []
+        self.transmissions = 0
+        self.acceptances = 0
+        # initialized by the method "compute_sigma_attribute"
+        # this is a horrible piece of code, but it works
+        self.DistortionProbability: TransitionProbabilities = None
 
     @property
     def L(self):
@@ -47,6 +42,13 @@ class Individual:
 
     @property
     def X(self) -> np.ndarray:
+        """
+        Return a randomly selected binary code based on the memory's
+        probability distribution.
+
+        Returns:
+            Binary: A binary code (numpy array of bits)
+        """
         return self.select_information()
 
     @property
@@ -61,7 +63,11 @@ class Individual:
     def delta(self):
         return self._delta
 
-    @L.setter  # type: ignore
+    @property
+    def P_array(self):
+        return np.array(list(self.P.distribution.values()))
+
+    @L.setter
     def L(self, memory: Memory):
         """
         Everytime the memory is updated, its probability distribution is
@@ -72,6 +78,7 @@ class Individual:
             memory (Memory): An array of binary codes.
         """
         self._L = memory
+        self.P = probability_distribution(self.L, self.memory_size)
         self.compute_entropy()
         self.compute_polarization()
 
@@ -80,46 +87,42 @@ class Individual:
         Everytime the entropy is updated, the distortion probability (delta)
         is automatically updated.
         """
-        self._H = memory_entropy(self.L)
+        self._H = memory_entropy(self.P)
         self.compute_conservation_factor()
 
     def compute_conservation_factor(self):
         """
         Updates the probability of distortion due to imperfect memory..
         """
-        self._delta = 1 / (np.exp(self.kappa * (1 / self.H)) + 1)
+        self._delta = 1 / (np.exp(self.kappa * (max_H - self.H) / max_H) + 1)
 
     def compute_polarization(self):
-        self._pi = self.L["polarities"].mean()
+        self._pi = self.L.polarities.mean()
 
     def select_information(self):
-        return self.L["distribution"].sample()
+        return random_selection(self.P)
 
     def update_memory(self):
         if len(self.L_temp) > 0:
-            L_temp = np.stack(self.L_temp, axis = 0)
-            new_codes = np.concatenate([self.L["codes"], L_temp], axis = 0) # noqa
-            new_codes = new_codes[len(self.L_temp):]
-
-            new_polarities = polarity(new_codes)
-            new_distribution = probability_distribution(new_codes)
-
+            polarity_array = polarity(np.asarray(self.L_temp))
             self.L = Memory(
-                codes = new_codes,
-                polarities = new_polarities,
-                distribution = new_distribution
+                codes = np.append(
+                    self.L.codes, self.L_temp, axis = 0
+                )[len(self.L_temp):],
+                polarities = np.append(
+                    self.L.polarities, polarity_array, axis = 0
+                )[len(self.L_temp):]
             )
-
             self.L_temp = []
 
     def receive_information(self, new_code: np.ndarray) -> bool:
         if not (new_code is None):
-            self.L_temp.append(new_code.squeeze(0))
+            self.L_temp.append(new_code)
             return True
         return False
 
     def transmitted(self):
-        self.stats["transmissions"] += 1
+        self.transmissions += 1
 
     def received(self):
-        self.stats["acceptances"] += 1
+        self.acceptances += 1

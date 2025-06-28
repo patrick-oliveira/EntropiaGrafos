@@ -1,13 +1,15 @@
 import pickle
 import time
+import numpy as np
+import multiprocessing as mp
+
 from copy import deepcopy
 from pathlib import Path
 from pprint import pprint
 from typing import Dict, List, Tuple, Union
 
-import numpy as np
-import multiprocessing as mp
 
+from multiprocessing import Lock, Value
 from opdynamics.model import Model, stats_dict
 from opdynamics.model.dynamics import distort, evaluate_information
 from opdynamics.model.statistics import StatisticHandler, error_curve
@@ -17,6 +19,7 @@ def initialize_model(
     graph_type: str,
     network_size: int,
     memory_size: int,
+    code_length: int,
     kappa: float,
     lambd: float,
     alpha: float,
@@ -28,7 +31,7 @@ def initialize_model(
     edge_prob: float = None,
     verbose: bool = False,
     worker_id: int = None,
-    distribution: str = "multivariate_normal",
+    distribution: str = "binomial",
     *args,
     **kwargs,
 ) -> Model:
@@ -41,6 +44,7 @@ def initialize_model(
         graph_type = graph_type,
         network_size = network_size,
         memory_size = memory_size,
+        code_length = code_length,
         kappa = kappa,
         lambd = lambd,
         alpha = alpha,
@@ -87,21 +91,71 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
     return statistic_handler
 
 
-def worker(*args, **kwargs):
-    print("Worker runned.")
+shared_counter = Value("i", 0)
+LOCK = Lock()
+
+def worker(arguments):
+    print("Worker started.")
+    model = deepcopy(arguments.get("initial_model"))
+    T = arguments.get("T")
+    save_path = arguments.get("save_path")
+    early_stop = arguments.get("early_stop")
+    epsilon = arguments.get("epsilon")
+
+    with LOCK:
+        with open(save_path / "last_run.txt", "r") as f:
+            last_run = int(f.read())
+        if last_run == -2:
+            return
+
+    statistic_handler = init_statistic_handler()
+
+    start = time.time()
+    for i in range(T):
+        simulate(model)
+        statistic_handler.update_statistics(model)
+    repetition_time = np.round(time.time() - start, 2)
+    
+    statistic_handler.end_repetition()
+
+    with LOCK:
+        repetition = shared_counter.value
+        print(f"Repetition ended in {repetition_time} seconds.")
+        print(f"Saving repetition {repetition} to {save_path}")
+
+        with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
+            pickle.dump(statistic_handler.repetitions[-1], file)
+        
+        run_count(repetition, save_path)
+        shared_counter.value += 1
 
 
 def parallel_evaluate_model(
     initial_model: Model,
     T: int,
+    save_path: Path,
     num_repetitions: int = 1,
     num_processes: int = -1,
+    last_run: int = -1,
     *args,
     **kwargs
 ):
-    with mp.Pool() as pool:
-        pool.map(worker, range(num_repetitions))
+    arguments = [
+        {
+            "initial_model": initial_model,
+            "T": T,
+            "save_path": save_path
+        }
+        for _ in range(num_repetitions)
+    ]
+    shared_counter.value = last_run + 1
+    print(f"Last run {shared_counter.value}")
+    start = time.time()
+    with mp.Pool(num_processes) as pool:
+        pool.map(worker, arguments)
+    total_tiime = np.round(time.time() - start, 2)
 
+    print(f"Total elapsed time: {total_tiime} seconds.")
 
 def evaluate_model(
     initial_model: Model,
@@ -201,11 +255,7 @@ def simulate(M: Model):
         v_ind = M.indInfo(v)
         received = u_ind.receive_information(
             evaluate_information(
-                distort(
-                    code = v_ind.X,
-                    ind_tendency = v_ind.tendency,
-                    memory = v_ind.L
-                ),
+                distort(v_ind.X, v_ind.DistortionProbability),
                 M.get_acceptance_probability(u, v)
             )
         )
@@ -214,11 +264,7 @@ def simulate(M: Model):
             u_ind.received()
         received = v_ind.receive_information(
             evaluate_information(
-                distort(
-                    code = u_ind.X,
-                    ind_tendency = u_ind.tendency,
-                    memory = u_ind.L
-                ),
+                distort(u_ind.X, u_ind.DistortionProbability),
                 M.get_acceptance_probability(v, u)
             )
         )
