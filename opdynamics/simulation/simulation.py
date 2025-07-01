@@ -125,6 +125,16 @@ def worker(arguments):
 
         with open(save_path / f"run_{repetition}_stats.pkl", "wb") as file:
             pickle.dump(statistic_handler.repetitions[-1], file)
+
+        errors = error_curve(save_path, T)
+        errors = {
+            "entropy": errors["entropy"][-1],
+            "proximity": errors["proximity"][-1],
+            "polarity": errors["polarity"][-1]
+        }
+
+        print("Last errors:")
+        pprint(errors)
         
         run_count(repetition, save_path)
         shared_counter.value += 1
