@@ -88,6 +88,7 @@ if __name__ == "__main__":
 
         if not os.path.exists(output_path):
             model = make_new_experiment(params, output_path)
+            last_run = -1
         else:
             model, last_run = load_experiment(output_path)
             print(last_run)
@@ -106,5 +107,6 @@ if __name__ == "__main__":
             num_repetitions = params["general_parameters"]["num_repetitions"],
             num_processes = num_processes,
             save_path = output_path,
-            last_run = last_run
+            last_run = last_run,
+            epsilon = params["general_parameters"]["epsilon"]
         )
