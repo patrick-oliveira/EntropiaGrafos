@@ -76,7 +76,7 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
             "Entropy",
             "Proximity",
             "Polarity",
-            # "Distribution",
+            "Distribution",
             # "Acceptance",
             # "Transmission"
         ]
