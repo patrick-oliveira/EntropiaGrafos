@@ -18,6 +18,7 @@ def get_param_mean_data(
     entropy       = np.zeros(T)
     proximity     = np.zeros(T)
     polarity      = np.zeros(T)
+    distribution  = np.zeros((32, T))
     acceptances   = []
     transmissions = []
 
@@ -27,6 +28,10 @@ def get_param_mean_data(
         entropy      += run_data['Entropy']
         proximity    += run_data["Proximity"]
         polarity     += run_data["Polarity"]
+        try:
+            distribution += np.array(run_data["Distribution"]).T
+        except:
+            pass
 
         # a = pd.DataFrame(
         #     run_data["Acceptance"][-1],
@@ -43,6 +48,7 @@ def get_param_mean_data(
     entropy      /= num_runs
     proximity    /= num_runs
     polarity     /= num_runs
+    distribution /= num_runs
 
     # acceptances = pd.concat(
     #     acceptances,
@@ -61,7 +67,7 @@ def get_param_mean_data(
         "entropy": entropy,
         "proximity": proximity,
         "polarity": polarity,
-        # "distribution": distribution,
+        "distribution": distribution,
         # "acceptances": acceptances,
         # "transmissions": transmissions
     }
