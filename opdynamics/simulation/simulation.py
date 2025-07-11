@@ -77,8 +77,8 @@ def init_statistic_handler(s_names: List[str] = None) -> StatisticHandler:
             "Proximity",
             "Polarity",
             "Distribution",
-            # "Acceptance",
-            # "Transmission"
+            "Acceptance",
+            "Transmission"
         ]
 
     for name in s_names:
