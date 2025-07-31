@@ -79,7 +79,8 @@ def error_curve(
             stats = pickle.load(open(results_path / run, "rb"))
         except Exception as e:
             print(f'Error loadind stats: {results_path / run}')
-            raise e
+            # raise e
+            continue
 
         entropy   = stats['Entropy']
         proximity = stats['Proximity']
