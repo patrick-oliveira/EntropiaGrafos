@@ -307,3 +307,65 @@ def run_count(run: int, path: Path):
     f = open(path / "last_run.txt", "w")
     f.write(str(run))
     f.close()
+
+import multiprocessing as mp
+from functools import partial
+import math
+
+# The compute_edge_updates function remains largely the same,
+# but it will now receive 'M' as its first argument when used with partial.
+def compute_edge_updates(M, edge):
+    """
+    Worker function: reads state, computes outcomes, and returns proposed updates.
+    It does NOT modify the model's state.
+    """
+    u, v = edge
+    u_ind = M.indInfo(u)
+    v_ind = M.indInfo(v)
+    received = u_ind.receive_information(
+        evaluate_information(
+            distort(v_ind.X, v_ind.DistortionProbability),
+            M.get_acceptance_probability(u, v)
+        )
+    )
+    if received:
+        v_ind.transmitted()
+        u_ind.received()
+    received = v_ind.receive_information(
+        evaluate_information(
+            distort(u_ind.X, u_ind.DistortionProbability),
+            M.get_acceptance_probability(v, u)
+        )
+    )
+    if received:
+        u_ind.transmitted()
+        v_ind.received()
+        
+        
+def simulate_parallel_decompose(M: 'Model', num_processes: int = None):
+    """
+    Executes one iteration by decomposing the problem into parallel compute
+    and serial update phases, using multiprocessing.Pool and functools.partial.
+    """
+    all_updates = []
+    all_edges = list(M.G.edges()) # Get all edges as a list
+
+    if num_processes is None:
+        num_processes = mp.cpu_count() # Use all available cores by default
+    elif num_processes <= 0:
+        raise ValueError("num_processes must be a positive integer.")
+
+    # Create a partial function: compute_edge_updates_with_M will now only need 'edge' as an argument
+    # 'M' is "baked in" to this function.
+    # When this partial function is sent to processes, 'M' is pickled and sent along.
+    compute_func = partial(compute_edge_updates, M)
+
+    # Phase 1 & 2: Parallel Compute and Gather
+    with mp.Pool(processes=num_processes) as pool:
+        # pool.map distributes the 'all_edges' list to the processes,
+        # calling compute_func for each edge.
+        # It automatically gathers all the results.
+        pool.map(compute_func, all_edges)
+
+    # Final model update is done after all state changes are applied
+    M.update_model()

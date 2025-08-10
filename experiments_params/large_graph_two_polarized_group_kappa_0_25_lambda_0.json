@@ -6,8 +6,8 @@
         "code_length": [5],
         "kappa": [0, 25],
         "lambd": [0],
-        "alpha": [0.6],
-        "omega": [0.2],
+        "alpha": [0.6, 0.4, 0.2],
+        "omega": [0.2, 0.4],
         "gamma": [0],
         "preferential_attachment": [2],
         "polarization_type": [0]

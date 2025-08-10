@@ -12,6 +12,9 @@ def get_param_mean_data(
     results_path: str
 ) -> SimulationResult:
     runs = get_runs_paths(params, results_path)
+    if len(runs) == 0:
+        return
+    
     T = len(pickle.load(open(runs[0], "rb"))['Entropy'])
     num_runs = len(runs)
 
@@ -30,7 +33,8 @@ def get_param_mean_data(
         polarity     += run_data["Polarity"]
         try:
             distribution += np.array(run_data["Distribution"]).T
-        except:
+        except Exception as e:
+            print(run, e)
             pass
 
         # a = pd.DataFrame(
