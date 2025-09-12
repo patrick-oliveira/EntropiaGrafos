@@ -126,7 +126,7 @@ def acceptance_probability(G: Graph, u: int, v: int, gamma: float) -> float:
     )
 
     sigma_ratio =(G.degree[v]**gamma)/max_sigma
-    return 2/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
+    return 1/( 1/(G[u][v]['Distance'] + e) + 1/(sigma_ratio + e) )
 
 
 e = 1e-10

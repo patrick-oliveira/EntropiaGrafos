@@ -95,6 +95,8 @@ early_stop = Value("i", 0)
 LOCK = Lock()
 
 def worker(arguments):
+    np.random.seed(int(time.time()))
+
     if early_stop.value == 1:
             return
 
