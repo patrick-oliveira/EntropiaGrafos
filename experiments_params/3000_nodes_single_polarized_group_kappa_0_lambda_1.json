@@ -1,0 +1,22 @@
+{
+    "simulation_params": {
+        "graph_type": ["barabasi"],
+        "network_size": [3000],
+        "memory_size": [256],
+        "code_length": [5],
+        "kappa": [0],
+        "lambd": [1],
+        "alpha": [1, 0.6, 0.2],
+        "omega": [0],
+        "gamma": [0],
+        "preferential_attachment": [2],
+        "polarization_type": [0]
+    },
+    "general_params": {
+        "T": 3000,
+        "num_repetitions": 5000,
+        "early_stop": true,
+        "epsilon": 0.00000001,
+        "results_path": "results/large_graph_single_polarized_group_kappa_0_lambda_1/"
+    }
+}
