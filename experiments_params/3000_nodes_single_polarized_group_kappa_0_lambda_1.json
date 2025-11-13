@@ -17,6 +17,6 @@
         "num_repetitions": 5000,
         "early_stop": true,
         "epsilon": 0.00000001,
-        "results_path": "results/large_graph_single_polarized_group_kappa_0_lambda_1/"
+        "results_path": "results/3000_nodes_single_polarized_group_kappa_0_lambda_1/"
     }
 }
