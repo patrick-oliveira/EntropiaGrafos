@@ -64,5 +64,5 @@ def acc_prob(
         float: The acceptance probability for 'u' of informations given by 'v'.
     """
     e = 1e-10
-    acc_p = 2 / (1 / (u_v_proximity + e) + 1 / (sigma_ratio + e))
+    acc_p = 1 / (1 / (u_v_proximity + e) + 1 / (sigma_ratio + e))
     return acc_p
