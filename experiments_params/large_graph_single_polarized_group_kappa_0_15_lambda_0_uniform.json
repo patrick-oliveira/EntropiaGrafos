@@ -17,7 +17,7 @@
         ]
     },
     "general_params": {
-        "T": 3000,
+        "T": 5000,
         "num_repetitions": 5000,
         "early_stop": true,
         "epsilon": 0.00000001,
