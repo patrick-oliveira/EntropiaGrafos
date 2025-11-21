@@ -17,6 +17,6 @@
         "num_repetitions": 5000,
         "early_stop": true,
         "epsilon": 0.00000001,
-        "results_path": "results/large_graph_two_polarized_group_no_neutral_kappa_0_25_lambda_0/"
+        "results_path": "results/large_graph_two_polarized_group_no_neutral_kappa_0_25_lambda_1/"
     }
 }
